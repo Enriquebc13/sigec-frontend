@@ -29,7 +29,6 @@ export default function LoginView() {
                             source={require("@/assets/images/Logo SIGEC_.png")}
                         />
                         <Text style={styles.title_login}>Inicio de sesión</Text>
-
                         <LoginForm />
                     </ScrollView>
                 </KeyboardAvoidingView>

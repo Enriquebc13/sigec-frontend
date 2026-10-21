@@ -1,80 +1,72 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { useUsers } from "./hooks/use-users";
 
-const users = [
-  {
-    id: "1",
-    name: "Carlos Hernández",
-    email: "carlos@gmail.com",
-    role: "Administrador",
-    status: "Activo",
-  },
-  {
-    id: "2",
-    name: "María López",
-    email: "maria@gmail.com",
-    role: "Cliente",
-    status: "Activo",
-  },
-  {
-    id: "3",
-    name: "José Martínez",
-    email: "jose@gmail.com",
-    role: "Cliente",
-    status: "Inactivo",
-  },
-  {
-    id: "4",
-    name: "Ana García",
-    email: "ana@gmail.com",
-    role: "Cliente",
-    status: "Activo",
-  },
-];
+const roleLabel = { ADMIN: "Administrador", CLIENT: "Cliente" };
 
 export default function ListUsersView() {
+  const { users, loading,refreshing, refresh, error } = useUsers();
+
   return (
-    <GradientScreen>
+    <GradientScreen
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={refresh}
+          tintColor="#FFFFFF"    // iOS
+          colors={["#5E35B1"]}   // Android
+        />
+      }>
       <View style={styles.container}>
         <Text style={styles.subtitle}>
           Consulta los usuarios registrados en SIGEC
         </Text>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>{users.length}</Text>
-          <Text style={styles.summaryText}>Usuarios registrados</Text>
-        </View>
+        {loading && <ActivityIndicator color="#FFFFFF" />}
+        {error && <Text style={styles.email}>{error}</Text>}
 
-        <Text style={styles.sectionTitle}>Lista de usuarios</Text>
-
-        {users.map((user) => (
-          <View key={user.id} style={styles.userCard}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user.name.charAt(0)}
-              </Text>
+        {!loading && !error && (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryNumber}>{users.length}</Text>
+              <Text style={styles.summaryText}>Usuarios registrados</Text>
             </View>
 
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <Text style={styles.email}>{user.email}</Text>
+            <Text style={styles.sectionTitle}>Lista de usuarios</Text>
 
-              <View style={styles.details}>
-                <Text style={styles.role}>{user.role}</Text>
-                <Text
-                  style={[
-                    styles.status,
-                    user.status === "Activo"
-                      ? styles.active
-                      : styles.inactive,
-                  ]}
-                >
-                  {user.status}
-                </Text>
+            {users.map((user) => (
+              <View key={user.id} style={styles.userCard}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{user.fullName.charAt(0)}</Text>
+                </View>
+
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>{user.fullName}</Text>
+                  <Text style={styles.email}>{user.email}</Text>
+                  <Text style={styles.email}>Miembro desde:
+                    {user.createdAt.toLocaleDateString('es-MX', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </Text>
+
+                  <View style={styles.details}>
+                    <Text style={styles.role}>{roleLabel[user.role]}</Text>
+                    <Text
+                      style={[
+                        styles.status,
+                        user.active ? styles.active : styles.inactive,
+                      ]}
+                    >
+                      {user.active ? "Activo" : "Inactivo"}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
-        ))}
+            ))}
+          </>
+        )}
       </View>
     </GradientScreen>
   );

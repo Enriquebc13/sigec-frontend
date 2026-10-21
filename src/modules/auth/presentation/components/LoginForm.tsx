@@ -14,7 +14,7 @@ export function LoginForm() {
             Alert.alert(
                 '¡Bienvenido!',
                 'Has iniciado sesión correctamente.',
-            ); 
+            );
             router.replace('/home')
 
         } catch (error) {
@@ -52,6 +52,9 @@ export function LoginForm() {
                 <Text style={styles.textButton}>Enviar</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity onPress={() => router.push('/register')}>
+                <Text style={styles.registerText}>¿No tienes una cuenta? Regístrate</Text>
+            </TouchableOpacity>
         </View>
     )
 }
@@ -90,5 +93,10 @@ const styles = StyleSheet.create({
         color: "#ffff",
         fontSize: 17,
         fontWeight: "bold"
+    },
+    registerText: {
+        fontSize: 15,
+        textAlign: "center",
+        color: "#6B7280"
     }
 })
