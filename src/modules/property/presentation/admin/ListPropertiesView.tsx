@@ -1,56 +1,7 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useProperties } from "./hooks/use-properties";
 
-const properties = [
-  {
-    id: "1",
-    title: "Local Comercial Centro",
-    description: "Local amplio en zona comercial.",
-    price: 8500,
-    maintenanceCost: 800,
-    dimensions: "6 x 8 m",
-    floor: 1,
-    type: "LOCAL",
-    status: "AVAILABLE",
-    amenities: "Estacionamiento, seguridad",
-  },
-  {
-    id: "2",
-    title: "Oficina Ejecutiva",
-    description: "Espacio ideal para oficinas administrativas.",
-    price: 6500,
-    maintenanceCost: 500,
-    dimensions: "5 x 6 m",
-    floor: 2,
-    type: "OFFICE",
-    status: "RESERVED",
-    amenities: "Internet, elevador",
-  },
-  {
-    id: "3",
-    title: "Bodega Industrial",
-    description: "Espacio para almacenamiento de mercancía.",
-    price: 12000,
-    maintenanceCost: 1000,
-    dimensions: "10 x 12 m",
-    floor: 0,
-    type: "WAREHOUSE",
-    status: "RENTED",
-    amenities: "Acceso para carga",
-  },
-  {
-    id: "4",
-    title: "Local Plaza Norte",
-    description: "Local comercial en mantenimiento.",
-    price: 7000,
-    maintenanceCost: 600,
-    dimensions: "5 x 7 m",
-    floor: 1,
-    type: "LOCAL",
-    status: "UNAVAILABLE",
-    amenities: "Vigilancia",
-  },
-];
 
 const typeLabels: Record<string, string> = {
   LOCAL: "Local comercial",
@@ -66,6 +17,29 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function ListPropertiesView() {
+
+  const { properties, loading, error } = useProperties();
+
+  if (loading) {
+    return (
+      <GradientScreen>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#C7B5FF" />
+        </View>
+      </GradientScreen>
+    );
+  }
+
+  if (error) {
+    return (
+      <GradientScreen>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </GradientScreen>
+    );
+  }
+
   return (
     <GradientScreen>
       <View style={styles.container}>
@@ -177,6 +151,17 @@ export default function ListPropertiesView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  errorText: {
+    color: "#FCA5A5",
+    fontSize: 14,
+    textAlign: "center",
   },
   title: {
     fontSize: 28,
