@@ -25,11 +25,18 @@ export default function Layout() {
                 />
                 <Stack.Screen
                     name="(admin)"
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
                 />
                 <Stack.Screen
                     name="(client)"
-                    options={{headerShown: false}}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="register"
+                    options={{
+                        headerShown: true,
+                        title: "Crear cuenta",
+                    }}
                 />
 
             </Stack>

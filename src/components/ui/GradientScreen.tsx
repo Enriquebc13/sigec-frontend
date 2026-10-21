@@ -1,8 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { ReactNode } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { ReactElement, ReactNode } from "react";
+import { RefreshControlProps, ScrollView, StyleSheet } from "react-native";
 
-export function GradientScreen({ children }: { children: ReactNode }) {
+type Props = {
+  children: ReactNode;
+  refreshControl?: ReactElement<RefreshControlProps>;
+};
+
+export function GradientScreen({ children, refreshControl }: Props) {
   return (
     <LinearGradient
       colors={["#5E35B1", "#1A0B2E", "#000000"]}
@@ -13,6 +18,7 @@ export function GradientScreen({ children }: { children: ReactNode }) {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       >
         {children}
       </ScrollView>
