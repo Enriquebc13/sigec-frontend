@@ -1,44 +1,6 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { StyleSheet, Text, View } from "react-native";
-
-const requests = [
-  {
-    id: "1",
-    telefono: "2221234567",
-    status: "PENDING",
-    createdAt: "10/10/2026",
-    user: "María López",
-    property: "Local Comercial Centro",
-    history: ["CREATED"],
-  },
-  {
-    id: "2",
-    telefono: "2229876543",
-    status: "APPROVED",
-    createdAt: "08/10/2026",
-    user: "Carlos Hernández",
-    property: "Oficina Ejecutiva",
-    history: ["CREATED", "APPROVED"],
-  },
-  {
-    id: "3",
-    telefono: "2214567890",
-    status: "REJECTED",
-    createdAt: "05/10/2026",
-    user: "Ana García",
-    property: "Bodega Industrial",
-    history: ["CREATED", "REJECTED"],
-  },
-  {
-    id: "4",
-    telefono: "2227654321",
-    status: "PENDING",
-    createdAt: "09/10/2026",
-    user: "José Martínez",
-    property: "Local Plaza Norte",
-    history: ["CREATED", "UPDATED"],
-  },
-];
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { useRequests } from "./hooks/use-requests";
 
 const statusLabels: Record<string, string> = {
   PENDING: "Pendiente",
@@ -54,82 +16,96 @@ const actionLabels: Record<string, string> = {
 };
 
 export default function ListRequestsView() {
+  const { requests, loading, refreshing, refresh, error } = useRequests();
+
   return (
-    <GradientScreen>
+    <GradientScreen
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={refresh}
+          tintColor="#FFFFFF"
+          colors={["#5E35B1"]}
+        />
+      }
+    >
       <View style={styles.container}>
         <Text style={styles.subtitle}>
           Consulta las solicitudes de espacios comerciales
         </Text>
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryNumber}>
-            {requests.length}
-          </Text>
-          <Text style={styles.summaryText}>
-            Solicitudes registradas
-          </Text>
-        </View>
+        {loading && <ActivityIndicator color="#FFFFFF" />}
+        {error && <Text style={styles.error}>{error}</Text>}
 
-        <Text style={styles.sectionTitle}>
-          Lista de solicitudes
-        </Text>
-
-        {requests.map((request) => (
-          <View key={request.id} style={styles.requestCard}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.requestNumber}>
-                Solicitud #{request.id}
-              </Text>
-
-              <Text
-                style={[
-                  styles.status,
-                  request.status === "PENDING"
-                    ? styles.pending
-                    : request.status === "APPROVED"
-                    ? styles.approved
-                    : styles.rejected,
-                ]}
-              >
-                {statusLabels[request.status] ?? request.status}
-              </Text>
+        {!loading && !error && (
+          <>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryNumber}>{requests.length}</Text>
+              <Text style={styles.summaryText}>Solicitudes registradas</Text>
             </View>
 
-            <Text style={styles.clientName}>
-              {request.user}
-            </Text>
-            <Text style={styles.clientLabel}>Cliente</Text>
+            <Text style={styles.sectionTitle}>Lista de solicitudes</Text>
 
-            <View style={styles.divider} />
+            {requests.map((request) => (
+              <View key={request.id} style={styles.requestCard}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.requestNumber}>
+                    Solicitud #{request.id.slice(-6)}
+                  </Text>
 
-            <Text style={styles.detailLabel}>Propiedad solicitada</Text>
-            <Text style={styles.detailText}>
-              {request.property}
-            </Text>
-
-            <Text style={styles.detailLabel}>Teléfono de contacto</Text>
-            <Text style={styles.detailText}>
-              {request.telefono}
-            </Text>
-
-            <Text style={styles.detailLabel}>Fecha de registro</Text>
-            <Text style={styles.detailText}>
-              {request.createdAt}
-            </Text>
-
-            <Text style={styles.detailLabel}>Historial de acciones</Text>
-            <View style={styles.historyContainer}>
-              {request.history.map((action, index) => (
-                <View key={`${action}-${index}`} style={styles.historyItem}>
-                  <Text style={styles.historyDot}>•</Text>
-                  <Text style={styles.historyText}>
-                    {actionLabels[action] ?? action}
+                  <Text
+                    style={[
+                      styles.status,
+                      request.status === "PENDING"
+                        ? styles.pending
+                        : request.status === "APPROVED"
+                        ? styles.approved
+                        : styles.rejected,
+                    ]}
+                  >
+                    {statusLabels[request.status] ?? request.status}
                   </Text>
                 </View>
-              ))}
-            </View>
-          </View>
-        ))}
+
+                <Text style={styles.clientName}>{request.userName}</Text>
+                <Text style={styles.clientLabel}>Cliente</Text>
+
+                <View style={styles.divider} />
+
+                <Text style={styles.detailLabel}>Propiedad solicitada</Text>
+                <Text style={styles.detailText}>{request.propertyName}</Text>
+
+                <Text style={styles.detailLabel}>Teléfono de contacto</Text>
+                <Text style={styles.detailText}>{request.telefono}</Text>
+
+                <Text style={styles.detailLabel}>Fecha de registro</Text>
+                <Text style={styles.detailText}>
+                  {request.createdAt.toLocaleDateString("es-MX", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </Text>
+
+                {request.history.length > 0 && (
+                  <>
+                    <Text style={styles.detailLabel}>Historial de acciones</Text>
+                    <View style={styles.historyContainer}>
+                      {request.history.map((action, index) => (
+                        <View key={`${action}-${index}`} style={styles.historyItem}>
+                          <Text style={styles.historyDot}>•</Text>
+                          <Text style={styles.historyText}>
+                            {actionLabels[action] ?? action}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </>
+                )}
+              </View>
+            ))}
+          </>
+        )}
       </View>
     </GradientScreen>
   );
@@ -139,16 +115,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
   subtitle: {
     fontSize: 14,
     color: "#D0C6E5",
     marginTop: 6,
     marginBottom: 22,
+  },
+  error: {
+    color: "#FCA5A5",
+    fontSize: 14,
+    marginBottom: 12,
   },
   summaryCard: {
     backgroundColor: "rgba(255,255,255,0.10)",
@@ -201,11 +177,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 8,
-    overflow: "hidden",
   },
   pending: {
     color: "#FCD34D",
-    backgroundColor: "rgba(234,179,8,0.15)",
+    backgroundColor: "rgba(245,158,11,0.15)",
   },
   approved: {
     color: "#86EFAC",
@@ -216,46 +191,44 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(239,68,68,0.15)",
   },
   clientName: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
   clientLabel: {
     fontSize: 12,
-    color: "#AFA3C8",
-    marginTop: 3,
+    color: "#C8C2D2",
+    marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    marginVertical: 14,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    marginVertical: 12,
   },
   detailLabel: {
     fontSize: 12,
-    color: "#AFA3C8",
-    marginTop: 10,
+    color: "#C8C2D2",
+    marginTop: 8,
   },
   detailText: {
     fontSize: 14,
     color: "#FFFFFF",
-    marginTop: 4,
+    marginTop: 2,
   },
   historyContainer: {
-    marginTop: 5,
+    marginTop: 6,
   },
   historyItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 5,
+    marginTop: 4,
   },
   historyDot: {
     color: "#C7B5FF",
-    fontSize: 18,
-    marginRight: 8,
+    marginRight: 6,
   },
   historyText: {
-    color: "#D0C6E5",
     fontSize: 13,
+    color: "#D0C6E5",
   },
 });
-
