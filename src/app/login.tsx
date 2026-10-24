@@ -1,4 +1,4 @@
-import LoginView from "@/modules/auth/presentation/LoginView";
+import LoginView from "@/modules/auth-api/presentation/LoginView";
 
 export default function LoginScreen(){
     return(

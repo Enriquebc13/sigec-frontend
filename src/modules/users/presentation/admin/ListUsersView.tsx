@@ -1,11 +1,34 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { User } from "@/modules/users/domain/entities/user.entity";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { UserDetailModal } from "./components/UserDetailModal";
 import { useUsers } from "./hooks/use-users";
 
 const roleLabel = { ADMIN: "Administrador", CLIENT: "Cliente" };
 
 export default function ListUsersView() {
-  const { users, loading,refreshing, refresh, error } = useUsers();
+  const { users, loading, refreshing, refresh, error, deleteUser } = useUsers();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Si el borrado sale bien, el hook actualiza la lista y aquí se cierra el modal.
+  // Si falla, se muestra el motivo y el modal se queda abierto.
+  const handleDelete = async (user: User) => {
+    try {
+      await deleteUser(user.id);
+      setSelectedUser(null);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo eliminar el usuario. Intenta de nuevo.");
+    }
+  };
 
   return (
     <GradientScreen
@@ -35,7 +58,12 @@ export default function ListUsersView() {
             <Text style={styles.sectionTitle}>Lista de usuarios</Text>
 
             {users.map((user) => (
-              <View key={user.id} style={styles.userCard}>
+              // Pressable hace tocable la tarjeta: al tocarla se abre el modal con ese usuario
+              <Pressable
+                key={user.id}
+                style={styles.userCard}
+                onPress={() => setSelectedUser(user)}
+              >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{user.fullName.charAt(0)}</Text>
                 </View>
@@ -43,11 +71,12 @@ export default function ListUsersView() {
                 <View style={styles.userInfo}>
                   <Text style={styles.userName}>{user.fullName}</Text>
                   <Text style={styles.email}>{user.email}</Text>
-                  <Text style={styles.email}>Miembro desde:
-                    {user.createdAt.toLocaleDateString('es-MX', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
+                  <Text style={styles.email}>
+                    Miembro desde:{" "}
+                    {user.createdAt.toLocaleDateString("es-MX", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
                     })}
                   </Text>
 
@@ -63,11 +92,18 @@ export default function ListUsersView() {
                     </Text>
                   </View>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </>
         )}
       </View>
+
+      {/* El modal solo se muestra cuando hay un usuario seleccionado */}
+      <UserDetailModal
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
+        onDelete={handleDelete}
+      />
     </GradientScreen>
   );
 }
@@ -75,11 +111,6 @@ export default function ListUsersView() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 14,

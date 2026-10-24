@@ -1,9 +1,13 @@
+import { DeleteUserUseCase } from '@/modules/users/application/usecases/delete-user.use-case';
 import { GetUsersUseCase } from '@/modules/users/application/usecases/get-users.use-case';
 import { User } from '@/modules/users/domain/entities/user.entity';
 import { UserApiRepository } from '@/modules/users/infrastructure/repositories/user-api.repository';
 import { useCallback, useEffect, useState } from 'react';
 
-const getUsersUseCase = new GetUsersUseCase(new UserApiRepository());
+// Un solo repositorio compartido por los dos casos de uso
+const repository = new UserApiRepository();
+const getUsersUseCase = new GetUsersUseCase(repository);
+const deleteUserUseCase = new DeleteUserUseCase(repository);
 
 export function useUsers() {
   const [users, setUsers] = useState<User[]>([]);
@@ -30,5 +34,12 @@ export function useUsers() {
     setRefreshing(false);
   }, [fetchUsers]);
 
-  return { users, loading, refreshing, error, refresh };
+  // Si la API falla, lanza el error para que la vista lo muestre.
+  // La lista solo se actualiza cuando el borrado fue exitoso.
+  const deleteUser = useCallback(async (id: string) => {
+    await deleteUserUseCase.execute(id);
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+  }, []);
+
+  return { users, loading, refreshing, refresh, error, deleteUser };
 }

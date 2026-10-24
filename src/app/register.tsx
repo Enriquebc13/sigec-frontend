@@ -1,4 +1,4 @@
-import RegisterView from "@/modules/auth/presentation/RegisterView";
+import RegisterView from "@/modules/auth-api/presentation/RegisterView";
 
 export default function RegisterScreen(){
     return (

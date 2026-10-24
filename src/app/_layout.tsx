@@ -1,9 +1,9 @@
-import { AuthProvider } from '@/modules/auth/presentation/context/AuthProvider';
+import { ApiAuthProvider } from '@/modules/auth-api/presentation/context/ApiAuthProvider';
 import { Stack } from 'expo-router';
 
 export default function Layout() {
     return (
-        <AuthProvider>
+        <ApiAuthProvider>
             <Stack
                 screenOptions={{
                     headerStyle: {
@@ -40,6 +40,6 @@ export default function Layout() {
                 />
 
             </Stack>
-        </AuthProvider>
+        </ApiAuthProvider>
     );
 }
