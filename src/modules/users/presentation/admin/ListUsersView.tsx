@@ -1,4 +1,5 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { UserChanges } from "@/modules/users/domain/entities/user-changes.entity";
 import { User } from "@/modules/users/domain/entities/user.entity";
 import { useState } from "react";
 import {
@@ -16,17 +17,33 @@ import { useUsers } from "./hooks/use-users";
 const roleLabel = { ADMIN: "Administrador", CLIENT: "Cliente" };
 
 export default function ListUsersView() {
-  const { users, loading, refreshing, refresh, error, deleteUser } = useUsers();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { users, loading, refreshing, refresh, error, deleteUser, updateUser } =
+    useUsers();
+
+  // Se guarda el id (no el objeto) y el usuario se busca en la lista:
+  // así, después de editar, el modal muestra los datos nuevos
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedUser = users.find((u) => u.id === selectedId) ?? null;
 
   // Si el borrado sale bien, el hook actualiza la lista y aquí se cierra el modal.
   // Si falla, se muestra el motivo y el modal se queda abierto.
   const handleDelete = async (user: User) => {
     try {
       await deleteUser(user.id);
-      setSelectedUser(null);
+      setSelectedId(null);
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo eliminar el usuario. Intenta de nuevo.");
+    }
+  };
+
+  // Devuelve true/false para que el modal sepa si salir del modo edición
+  const handleUpdate = async (user: User, changes: UserChanges): Promise<boolean> => {
+    try {
+      await updateUser(user.id, changes);
+      return true;
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo actualizar el usuario.");
+      return false;
     }
   };
 
@@ -62,7 +79,7 @@ export default function ListUsersView() {
               <Pressable
                 key={user.id}
                 style={styles.userCard}
-                onPress={() => setSelectedUser(user)}
+                onPress={() => setSelectedId(user.id)}
               >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{user.fullName.charAt(0)}</Text>
@@ -101,8 +118,9 @@ export default function ListUsersView() {
       {/* El modal solo se muestra cuando hay un usuario seleccionado */}
       <UserDetailModal
         user={selectedUser}
-        onClose={() => setSelectedUser(null)}
+        onClose={() => setSelectedId(null)}
         onDelete={handleDelete}
+        onUpdate={handleUpdate}
       />
     </GradientScreen>
   );
