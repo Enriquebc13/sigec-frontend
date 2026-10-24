@@ -1,9 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient"; // 1. IMPORTANTE: Importar el componente
 import { Image, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LoginForm } from "./components/LoginForm";
+import { LoginForm2 } from "./components/LoginForm";
 
-export default function LoginView() {
+export default function LoginView2() {
     return (
         <LinearGradient
             colors={['#5E35B1', '#1A0B2E', '#000000']}
@@ -29,7 +29,7 @@ export default function LoginView() {
                             source={require("@/assets/images/Logo SIGEC_.png")}
                         />
                         <Text style={styles.title_login}>Inicio de sesión</Text>
-                        <LoginForm />
+                        <LoginForm2 />
                     </ScrollView>
                 </KeyboardAvoidingView>
             </SafeAreaView>

@@ -1,15 +1,13 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { useState } from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-export default function RegisterView() {
-  const [role, setRole] = useState<"CLIENT" | "ADMIN">("CLIENT");
+export default function RegisterView2() {
 
   return (
     <GradientScreen>
@@ -51,28 +49,6 @@ export default function RegisterView() {
         />
 
         <Text style={styles.label}>Tipo de usuario</Text>
-        <View style={styles.roles}>
-          <TouchableOpacity
-            style={[
-              styles.roleButton,
-              role === "CLIENT" && styles.roleSelected,
-            ]}
-            onPress={() => setRole("CLIENT")}
-          >
-            <Text style={styles.roleText}>Cliente</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.roleButton,
-              role === "ADMIN" && styles.roleSelected,
-            ]}
-            onPress={() => setRole("ADMIN")}
-          >
-            <Text style={styles.roleText}>Administrador</Text>
-          </TouchableOpacity>
-        </View>
-
         <TouchableOpacity style={styles.submitButton}>
           <Text style={styles.submitText}>Crear cuenta</Text>
         </TouchableOpacity>
@@ -115,28 +91,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     color: "#fff",
     marginBottom: 17,
-  },
-  roles: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 25,
-  },
-  roleButton: {
-    flex: 1,
-    padding: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#7655ad",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  roleSelected: {
-    backgroundColor: "#5E35B1",
-    borderColor: "#b99aff",
-  },
-  roleText: {
-    color: "#fff",
-    fontWeight: "600",
   },
   submitButton: {
     backgroundColor: "#7E57C2",
