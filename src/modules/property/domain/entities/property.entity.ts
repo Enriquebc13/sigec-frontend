@@ -1,3 +1,8 @@
+export interface PropertyImage {
+  id: string;
+  url: string;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -9,4 +14,5 @@ export interface Property {
   type: string; // LOCAL | OFFICE | WAREHOUSE
   status: string; // AVAILABLE | RESERVED | RENTED | UNAVAILABLE
   amenities: string | null;
+  images: PropertyImage[];
 }

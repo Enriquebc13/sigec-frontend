@@ -1,5 +1,5 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
 
@@ -63,14 +63,22 @@ export default function ListPropertiesView() {
 
         {properties.map((property) => (
           <View key={property.id} style={styles.propertyCard}>
+            {property.images.length > 0 && (
+              <Image
+                source={{ uri: property.images[0].url }}
+                style={styles.cover}
+                resizeMode="cover"
+              />
+            )}
+
             <View style={styles.cardHeader}>
               <View style={styles.iconContainer}>
                 <Text style={styles.icon}>
                   {property.type === "LOCAL"
                     ? "🏪"
                     : property.type === "OFFICE"
-                    ? "🏢"
-                    : "📦"}
+                      ? "🏢"
+                      : "📦"}
                 </Text>
               </View>
 
@@ -132,10 +140,10 @@ export default function ListPropertiesView() {
                   property.status === "AVAILABLE"
                     ? styles.available
                     : property.status === "RESERVED"
-                    ? styles.reserved
-                    : property.status === "RENTED"
-                    ? styles.rented
-                    : styles.unavailable,
+                      ? styles.reserved
+                      : property.status === "RENTED"
+                        ? styles.rented
+                        : styles.unavailable,
                 ]}
               >
                 {statusLabels[property.status]}
@@ -206,6 +214,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
+  },
+    cover: {
+    width: "100%",
+    height: 160,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   cardHeader: {
     flexDirection: "row",

@@ -8,7 +8,6 @@ export class PropertyApiRepository implements PropertyRepository {
 
     const data = await apiClient<PropertyResponseDto[]>('/properties');
 
-
     return data.map((p) => ({
       id: p.id,
       title: p.title,
@@ -21,6 +20,7 @@ export class PropertyApiRepository implements PropertyRepository {
       type: p.type,
       status: p.status,
       amenities: p.amenities ?? null,
+      images: (p.images ?? []).map((img) => ({ id: img.id, url: img.url })),
     }));
   }
 }
