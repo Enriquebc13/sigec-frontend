@@ -1,23 +1,13 @@
+import { apiClient } from "@/core/http/api-client";
 import { PropertyResponseDto } from "../../application/dtos/property-response.dto";
 import { Property } from "../../domain/entities/property.entity";
 import { PropertyRepository } from "../../domain/interfaces/property.repository";
 
 export class PropertyApiRepository implements PropertyRepository {
   async getAll(): Promise<Property[]> {
-    const response = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/properties`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.EXPO_PUBLIC_TOKEN_ADMIN}`,
-        },
-      }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status} al cargar las propiedades`);
-    }
+    const data = await apiClient<PropertyResponseDto[]>('/properties');
 
-    const data: PropertyResponseDto[] = await response.json();
 
     return data.map((p) => ({
       id: p.id,
