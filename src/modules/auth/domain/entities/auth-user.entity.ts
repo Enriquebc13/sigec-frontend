@@ -1,11 +1,18 @@
 export interface AuthUser {
-    id: string;
-    email: string;
-} 
+  id: string;
+  email: string;
+  role: 'ADMIN' | 'CLIENT';
+  name?: string;
+  lastname?: string;
+  metadata?: {
+    lastSignInTime?: string;
+    creationTime?: string;
+  };
+}
 
-// definimos qué información de usuario manejará nuestra aplicación
 export interface User {
-    iud: string;
-    email: string;
-    displayName: string,
-} 
+  id: string;
+  email: string;
+  displayName: string;
+  role?: 'ADMIN' | 'CLIENT';
+}

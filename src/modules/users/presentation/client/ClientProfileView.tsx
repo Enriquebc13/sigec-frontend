@@ -41,10 +41,10 @@ export default function ClientProfileView() {
             <Text style={styles.infoUser}>{user?.email}</Text>
             <View style={styles.containerInfo}>
                 <Text style={styles.infoUser}>
-                    Última conexión: {user?.metadata.lastSignInTime}
+                    Última conexión: {user?.metadata?.lastSignInTime ?? 'No disponible'}
                 </Text>
                 <Text style={styles.infoUser}>
-                    Fecha de creación de la cuenta: {user?.metadata.creationTime}
+                    Fecha de creación de la cuenta: {user?.metadata?.creationTime ?? 'No disponible'}
                 </Text>
             </View>
 

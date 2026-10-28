@@ -1,68 +1,96 @@
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut as signOutFirebase, User } from 'firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthToken } from '@/core/http/api-client';
+import { AuthUser } from '../../domain/entities/auth-user.entity';
 import { LoginUser } from '../../domain/usecases/login.use-case';
-import { FirebaseAuthRepository } from '../../infrastructure/repositories/firebase-auth.repository';
+import { ApiAuthRepository } from '../../infrastructure/repositories/api-auth.repository';
+
+const STORAGE_KEY_TOKEN = '@sigec_auth_token';
+const STORAGE_KEY_USER = '@sigec_auth_user';
 
 type AuthContextType = {
-  user: User | null;      // usuario autenticado actual (o null si no hay sesión)
-  loading: boolean;                  // true mientras Firebase verifica si hay sesión guardada
-  login: (email: string, password: string) => Promise<void>; // función para iniciar sesión
-  setUser: (user: User | null) => void;  // permite actualizar el usuario manualmente si hace falta
-  signOut: () => void;            // función para cerrar sesión
-  checkLogued: () => boolean; // indica si hay un usuario autenticado (true/false)
+  user: AuthUser | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<AuthUser>;
+  setUser: (user: AuthUser | null) => void;
+  signOut: () => Promise<void>;
+  checkLogued: () => boolean;
 };
 
-// Valores por defecto del contexto
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  login: async () => {},
+  login: async () => {
+    throw new Error('AuthContext no inicializado');
+  },
   setUser: () => {},
-  signOut: () => {},
+  signOut: async () => {},
   checkLogued: () => false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged es un listener de Firebase: se dispara
-    // automáticamente cada vez que cambia el estado de autenticación
-    // (login, logout, o al restaurar una sesión guardada al abrir la app)
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log("info del usuario:", firebaseUser?.email ?? "sin usuario");
-      setUser(firebaseUser);   // actualiza el usuario con el valor real de Firebase
-      setLoading(false);        // ya termino de verificar, se puede dejar de mostrar el splash/loader
-    });
-    return () => unsubscribe();
+    const restoreSession = async () => {
+      try {
+        const [savedToken, savedUser] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEY_TOKEN),
+          AsyncStorage.getItem(STORAGE_KEY_USER),
+        ]);
+
+        if (savedToken && savedUser) {
+          setAuthToken(savedToken);
+          setUser(JSON.parse(savedUser));
+        } else {
+          setAuthToken(null);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error restaurando la sesión:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
   }, []);
 
-  // Autenticación: Ocupa lógica al caso de uso (LoginUser),
-  // que a su vez usa el repositorio concreto de Firebase.
-  // onAuthStateChanged lo detecta y lo actualiza automáticamente.
-  const login = async (email: string, password: string) => {
-    const repository = new FirebaseAuthRepository();
+  const login = async (email: string, password: string): Promise<AuthUser> => {
+    const repository = new ApiAuthRepository();
     const loginUser = new LoginUser(repository);
-    await loginUser.execute(email, password);
+    const result = await loginUser.execute(email, password);
+
+    setAuthToken(result.token);
+    setUser(result.user);
+
+    await Promise.all([
+      AsyncStorage.setItem(STORAGE_KEY_TOKEN, result.token),
+      AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(result.user)),
+    ]);
+
+    return result.user;
   };
 
-  // Cierre de sesion
   const signOut = async () => {
     try {
-      await signOutFirebase(auth);
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEY_TOKEN),
+        AsyncStorage.removeItem(STORAGE_KEY_USER),
+      ]);
+      setAuthToken(null);
       setUser(null);
     } catch (error) {
-      console.log('Error al cerrar sesión:', error);
+      console.error('Error al cerrar sesión:', error);
       throw error;
     }
   };
+
   const checkLogued = () => {
     return !!user;
   };
 
-  // Expone el estado y las funciones a todos los componentes hijos
   return (
     <AuthContext.Provider value={{ user, loading, login, setUser, signOut, checkLogued }}>
       {children}
@@ -70,15 +98,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// se usa useAuth()
 export const useAuth = () => useContext(AuthContext);
-
-
-  // const signOut = () => {   
-  //   const auth = getAuth(app);
-  //   signOutFirebase(auth).then(() => {
-  //     setUser(null);
-  //   }).catch((error) => {
-  //     console.log('Error al cerrar sesión:', error);
-  //   });
-  // };

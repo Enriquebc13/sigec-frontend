@@ -1,6 +1,10 @@
 import { AuthUser } from "../entities/auth-user.entity";
 
-export interface AuthRepository {
-    login(email: string, password: string): Promise<AuthUser>;
+export interface LoginResult {
+  user: AuthUser;
+  token: string;
 }
-// Este será el contrato que indica qué operaciones de autenticación necesitamos:
+
+export interface AuthRepository {
+  login(email: string, password: string): Promise<LoginResult>;
+}

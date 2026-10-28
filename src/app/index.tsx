@@ -7,7 +7,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 SplashScreen.preventAutoHideAsync();
 
 export default function IndexScreen() {
-  const { loading, checkLogued } = useAuth();
+  const { user, loading, checkLogued } = useAuth();
 
   useEffect(() => {
     if (!loading) {
@@ -17,22 +17,17 @@ export default function IndexScreen() {
 
   if (loading) {
     return (
-        <View style={styles.container}>
-          <ActivityIndicator size="large" />
-        </View>
-      
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#5E35B1" />
+      </View>
     );
   }
 
-return (
-  <Redirect
-    href={
-        //  Cambiar ruta
-            (checkLogued() ? '/(admin)/home' : '/login') as Href
-    }
-  />
-);
+  const destination = checkLogued()
+    ? (user?.role === 'ADMIN' ? '/(admin)/home' : '/(client)/home')
+    : '/login';
 
+  return <Redirect href={destination as Href} />;
 }
 
 const styles = StyleSheet.create({
@@ -40,5 +35,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#1A0B2E',
   },
 });
