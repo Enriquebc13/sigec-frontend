@@ -1,3 +1,8 @@
+export interface PropertyImageDto {
+  id: string;
+  url: string;
+}
+
 export interface PropertyResponseDto {
   id: string;
   title: string;
@@ -9,4 +14,5 @@ export interface PropertyResponseDto {
   type: string;
   status: string;
   amenities: string | null;
+  images?: PropertyImageDto[];
 }
