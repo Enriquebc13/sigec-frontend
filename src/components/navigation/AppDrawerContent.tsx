@@ -1,13 +1,13 @@
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
 import {
-    Image,
-    ImageSourcePropType,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Image,
+  ImageSourcePropType,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,13 +34,14 @@ export function AppDrawerContent({
     <View style={{ flex: 1, paddingTop: insets.top }}>
       <View style={styles.imageContainer}>
         <Image source={logo} style={styles.image} resizeMode="contain" />
-         <Text style={styles.title}>S I G E C</Text>
+        <Text style={styles.title}>S I G E C</Text>
       </View>
-     
+
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
+          const icono = options.drawerIcon;
 
           if ((options.drawerItemStyle as any)?.display === 'none') return null;
 
@@ -56,6 +57,15 @@ export function AppDrawerContent({
               onPress={() => navigation.navigate(route.name)}
               style={[styles.item, focused && styles.itemActive]}
             >
+              {icono && (
+                <View style={styles.icon}>
+                  {icono({
+                    focused,
+                    color: focused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                    size: 22,
+                  })}
+                </View>
+              )}
               <Text
                 style={[styles.label, { color: focused ? ACTIVE_COLOR : INACTIVE_COLOR }]}
               >
@@ -79,19 +89,26 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   image: { width: 150, height: 150 },
-  item: {
-    marginHorizontal: 10,
-    marginVertical: 2,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
+item: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginHorizontal: 10,
+  marginVertical: 2,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  borderRadius: 8,
+},
   title: {
-    color:"#ffff",
-    fontSize:20,
-    fontWeight:"bold",
-    marginTop:10
+    color: "#ffff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 10
   },
   itemActive: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, },
   label: { fontSize: 20, fontWeight: 'bold', padding: 10 },
+  icon: {
+  width: 35,
+  alignItems: "center",
+  justifyContent: "center",
+},
 });

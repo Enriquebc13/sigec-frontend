@@ -1,87 +1,158 @@
+import { GradientScreen } from "@/components/ui/GradientScreen";
+import { InfoRow } from "@/components/ui/InfoRow";
 import { Avatar } from "@/components/ui/avatar";
-import { LinearGradient } from "expo-linear-gradient";
+import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../../auth/presentation/context/AuthProvider";
+import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useUserById } from "./hooks/use-user-by-id";
+
+const roleLabel = { ADMIN: "Administrador", CLIENT: "Cliente" };
 
 export default function AdminProfileView() {
-    const { user, signOut } = useAuth();
+  const { session, logout } = useApiAuth();
+  const { user, loading, error } = useUserById(session?.userId);
 
-    const handleSignOut = () => {
-        Alert.alert(
-            'Cerrar sesión',
-            '¿Estás seguro de que quieres salir?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Cerrar sesión',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await signOut();
-                            router.replace('/login');
-                        } catch (error) {
-                            console.error('Error al cerrar sesión:', error);
-                            Alert.alert('Error', 'No se pudo cerrar la sesión. Inténtalo de nuevo.');
-                        }
-                    },
-                },
-            ]
-        );
-    };
-    return (
-        <LinearGradient
-            colors={['#5E35B1', '#1A0B2E', '#000000']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.gradientContainer}
-        >
-            <Text style={styles.title}>Bienvenido administrador</Text>
-            <Avatar/>
-            <Text style={styles.infoUser}>{user?.email}</Text>
-            <View style={styles.containerInfo}>
-            </View>
+  // Datos mostrados: los de la API y, mientras no lleguen, los de la sesión
+  const displayName = user?.fullName || "Usuario";
+  const role = user?.role
 
-            <TouchableOpacity style={styles.button} onPress={handleSignOut}>
-                <Text style={styles.textButton}>Cerrar Sesion</Text>
-            </TouchableOpacity>
-        </LinearGradient>
-    )
+  const handleSignOut = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro de que quieres salir?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Cerrar sesión",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+            router.replace("/login");
+          } catch (e) {
+            console.error("Error al cerrar sesión:", e);
+            Alert.alert("Error", "No se pudo cerrar la sesión. Inténtalo de nuevo.");
+          }
+        },
+      },
+    ]);
+  };
+
+  return (
+    <GradientScreen>
+      <View style={styles.header}>
+        <Text style={styles.title}>Perfil de Administrador</Text>
+        <Avatar />
+        <Text style={styles.name} numberOfLines={1}>
+          {displayName}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Información de la cuenta</Text>
+
+        {loading && <ActivityIndicator color="#FFFFFF" />}
+        {error && <Text style={styles.error}>{error}</Text>}
+
+        <InfoRow icon="mail" label="Correo electrónico" value={user?.email ?? session?.email ?? "-"} />
+        <InfoRow icon="idcard" label="Tipo de usuario" value={role ? roleLabel[role] : "-"} />
+        <InfoRow
+          icon="calendar"
+          label="Miembro desde"
+          value={
+            user
+              ? user.createdAt.toLocaleDateString("es-MX", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "-"
+          }
+        />
+        <InfoRow
+          icon="user"
+          label="Sesión válida hasta"
+          value={
+            session
+              ? session.expiresAt.toLocaleString("es-MX", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "-"
+          }
+        />
+      </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+        <AntDesign name="logout" size={20} color="#FCA5A5" />
+        <Text style={styles.logoutText}>Cerrar sesión</Text>
+      </TouchableOpacity>
+    </GradientScreen>
+  );
 }
 
 const styles = StyleSheet.create({
-    gradientContainer: {
-        flex: 1,
-        alignItems: "center",
-        padding: 20
-    },
-    title: {
-        fontSize: 30,
-        color: "#ffff"
-    },
-    button: {
-        marginTop: 120,
-        width: 220,
-        height: 45,
-        borderRadius: 20,
-        backgroundColor: "rgba(255, 255, 255, 0.09)",
-        alignItems: "center",
-        justifyContent: "center"
-    },
-    textButton: {
-        color: "#ffff",
-        fontSize: 17
-    },
-    infoUser: {
-        margin: 20,
-        color: "#ffff",
-        fontSize: 18,
-    },
-    containerInfo: {
-        width: 330,
-        // borderColor:"white",
-        // borderWidth:2,
-        borderRadius: 20,
-        backgroundColor: "rgba(156, 91, 91, 0.08)",
-    },
-})
+  header: {
+    alignItems: "center",
+    marginTop:5,
+    marginBottom: 25,
+  },
+  title: {
+   fontSize:23,
+   color:"#ffff",
+   fontWeight:"bold"
+  },
+  name: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "600",
+    marginTop: 5,
+  },
+  roleBadge: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#D7C9FF",
+    backgroundColor: "rgba(94,53,177,0.45)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  card: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
+    marginBottom:5,
+  },
+  cardTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 14,
+  },
+  error: {
+    color: "#FCA5A5",
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: "rgba(239,68,68,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(239,68,68,0.35)",
+  },
+  logoutText: {
+    color: "#FCA5A5",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});

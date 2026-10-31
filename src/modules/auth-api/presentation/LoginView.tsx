@@ -13,7 +13,7 @@ export default function LoginView() {
             style={styles.gradientContainer}
         >
             <SafeAreaView style={styles.safeArea}>
-                <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+                <StatusBar barStyle="light-content"/>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardAvoidingView}

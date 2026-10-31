@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#ffffffee',
+    backgroundColor: '#0d0818',
     borderRadius: 16,
     padding: 20,
   },
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#222' },
+  title: { fontSize: 20, fontWeight: 'bold', color: '#ffffff' },
   close: { fontSize: 20, color: '#666' },
 });

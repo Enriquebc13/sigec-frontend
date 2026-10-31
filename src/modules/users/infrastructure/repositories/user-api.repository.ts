@@ -26,6 +26,11 @@ export class UserApiRepository implements UserRepository {
     return data.map(toUser);
   }
 
+  async getById(id: string): Promise<User> {
+    const data = await apiClient<UserDetailResponseDto>(`/users/${id}`);
+    return toUser(data);
+  }
+
   async create(user: NewUser): Promise<void> {
     const body: CreateUserDto = {
       name: user.name,
@@ -40,7 +45,7 @@ export class UserApiRepository implements UserRepository {
     });
   }
 
-    async update(id: string, changes: UserChanges): Promise<void> {
+  async update(id: string, changes: UserChanges): Promise<void> {
     // Los campos undefined no se incluyen en el JSON, así que solo viajan los modificados
     const body: UpdateUserDto = {
       name: changes.name,

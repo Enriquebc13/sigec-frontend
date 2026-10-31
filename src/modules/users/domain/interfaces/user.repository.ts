@@ -5,6 +5,7 @@ import { User } from '../entities/user.entity';
 export interface UserRepository {
   getAll(): Promise<User[]>;
   create(user: NewUser): Promise<void>;
+  getById(id: string): Promise<User>;
   update(id: string, changes: UserChanges): Promise<void>;
   delete(id: string): Promise<void>;
 }
