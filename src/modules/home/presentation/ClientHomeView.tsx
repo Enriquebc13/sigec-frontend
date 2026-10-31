@@ -1,6 +1,7 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { OptionCard } from "@/components/ui/OptionCard";
-import { useAuth } from "@/modules/auth/presentation/context/AuthProvider";
+import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
+import { useUserById } from "@/modules/users/presentation/admin/hooks/use-user-by-id";
 import {
   StyleSheet,
   Text,
@@ -8,8 +9,9 @@ import {
 } from "react-native";
 
 export default function ClientHomeView() {
-  const { user } = useAuth();
-
+   const { session, logout } = useApiAuth();
+ const { user} = useUserById(session?.userId);
+  const displayName = user?.fullName || "Usuario";
   const options = [
     {
       icon: "🏢",
@@ -44,14 +46,14 @@ export default function ClientHomeView() {
       <View style={styles.userCard}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>
-            {user?.email?.charAt(0).toUpperCase() ?? "U"}
+            {user?.name?.charAt(0).toUpperCase() ?? "U"}
           </Text>
         </View>
 
         <View style={styles.userInfo}>
           <Text style={styles.userLabel}>Sesión iniciada como</Text>
-          <Text style={styles.infoUser} numberOfLines={2}>
-            {user?.email ?? "Usuario"}
+          <Text numberOfLines={2}>
+            <Text style={styles.infoUser}>{displayName}</Text>
           </Text>
         </View>
       </View>

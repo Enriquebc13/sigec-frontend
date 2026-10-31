@@ -1,4 +1,5 @@
 import { ApiError } from "@/core/http/api-client";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -9,6 +10,7 @@ export function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { login } = useApiAuth();
 
     const handleLogin = async () => {
@@ -35,26 +37,44 @@ export function LoginForm() {
         <View style={styles.formContainer}>
             <Text style={styles.label}>Correo electrónico</Text>
 
-            <TextInput placeholder="ejemplo@correo.com"
-                placeholderTextColor="#8B88A0"
-                keyboardType="email-address" // Muestra el teclado optimizado con la '@'
-                autoCapitalize="none"        // Evita que la primera letra sea mayúscula
-                autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
-                style={styles.containerInput} >
-            </TextInput>
+            <View style={styles.inputContainer}>
+                <AntDesign name="mail" size={20} color="#8B88A0" />
 
+                <TextInput
+                    placeholder="ejemplo@correo.com"
+                    placeholderTextColor="#8B88A0"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={email}
+                    onChangeText={setEmail}
+                    style={styles.input}
+                />
+            </View>
             <Text style={styles.label}>Contraseña</Text>
-            <TextInput placeholder="Ingresa tu contraseña"
-                placeholderTextColor="#8B88A0"
-                autoCapitalize="none"        // Evita que la primera letra sea mayúscula
-                autoCorrect={false}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                style={styles.containerInput} >
-            </TextInput>
+
+            <View style={styles.inputContainer}>
+                <AntDesign name="lock" size={20} color="#8B88A0" />
+
+                <TextInput
+                    placeholder="Ingresa tu contraseña"
+                    placeholderTextColor="#8B88A0"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                    style={styles.input}
+                />
+
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <AntDesign
+                        name={showPassword ? "eye-invisible" : "eye"}
+                        size={20}
+                        color="#8B88A0"
+                    />
+                </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
                 style={[styles.button, submitting && { opacity: 0.6 }]}
@@ -112,5 +132,21 @@ const styles = StyleSheet.create({
         fontSize: 15,
         textAlign: "center",
         color: "#6B7280"
-    }
+    },
+    inputContainer: {
+        width: 340,
+        height: 55,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        gap: 10,
+    },
+
+    input: {
+        flex: 1,
+        height: "100%",
+        color: "#FFFFFF",
+    },
 })

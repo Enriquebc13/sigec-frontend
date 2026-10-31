@@ -1,5 +1,7 @@
 import { DeleteUserUseCase } from '@/modules/users/application/usecases/delete-user.use-case';
 import { GetUsersUseCase } from '@/modules/users/application/usecases/get-users.use-case';
+import { UpdateUserUseCase } from '@/modules/users/application/usecases/update-user.use-case';
+import { UserChanges } from '@/modules/users/domain/entities/user-changes.entity';
 import { User } from '@/modules/users/domain/entities/user.entity';
 import { UserApiRepository } from '@/modules/users/infrastructure/repositories/user-api.repository';
 import { useCallback, useEffect, useState } from 'react';
@@ -7,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 // Un solo repositorio compartido por los dos casos de uso
 const repository = new UserApiRepository();
 const getUsersUseCase = new GetUsersUseCase(repository);
+const updateUserUseCase = new UpdateUserUseCase(repository);
 const deleteUserUseCase = new DeleteUserUseCase(repository);
 
 export function useUsers() {
@@ -41,5 +44,23 @@ export function useUsers() {
     setUsers((prev) => prev.filter((u) => u.id !== id));
   }, []);
 
-  return { users, loading, refreshing, refresh, error, deleteUser };
+const updateUser = useCallback(async (id: string, changes: UserChanges) => {
+    const saved = await updateUserUseCase.execute(id, changes);
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id !== id) return u;
+        const name = saved.name ?? u.name;
+        const lastname = saved.lastname ?? u.lastname;
+        return {
+          ...u,
+          name,
+          lastname,
+          fullName: `${name} ${lastname}`.trim(),
+          email: saved.email ?? u.email,
+        };
+      }),
+    );
+  }, []);
+
+  return { users, loading, refreshing, refresh, error, deleteUser, updateUser  };
 }

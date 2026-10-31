@@ -1,5 +1,10 @@
+
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
+import { UserChanges } from "@/modules/users/domain/entities/user-changes.entity";
 import { User } from "@/modules/users/domain/entities/user.entity";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,23 +15,86 @@ import {
   Text,
   View,
 } from "react-native";
-import { UserDetailModal } from "./components/UserDetailModal";
+import { EditUserModal } from "./components/EditUserModal";
 import { useUsers } from "./hooks/use-users";
 
-const roleLabel = { ADMIN: "Administrador", CLIENT: "Cliente" };
+const roleLabel = {
+  ADMIN: "Administrador",
+  CLIENT: "Cliente",
+};
 
 export default function ListUsersView() {
-  const { users, loading, refreshing, refresh, error, deleteUser } = useUsers();
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const {
+    users,
+    loading,
+    refreshing,
+    refresh,
+    error,
+    deleteUser,
+    updateUser,
+  } = useUsers();
 
-  // Si el borrado sale bien, el hook actualiza la lista y aquí se cierra el modal.
-  // Si falla, se muestra el motivo y el modal se queda abierto.
-  const handleDelete = async (user: User) => {
+  const { session } = useApiAuth();
+
+  // Estado del buscador
+  const [searchName, setSearchName] = useState("");
+
+  // Guarda el ID del usuario que se está editando
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingUser = users.find((u) => u.id === editingId) ?? null;
+
+  // ID del usuario que se está eliminando
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Filtra los usuarios por nombre, ignorando mayúsculas y minúsculas
+  const filteredUsers = users.filter((user) =>
+    user.fullName
+      .toLowerCase()
+      .includes(searchName.trim().toLowerCase())
+  );
+
+  // Confirma antes de eliminar
+  const confirmDelete = (user: User) => {
+    Alert.alert(
+      "Eliminar usuario",
+      `¿Seguro que quieres eliminar a ${user.fullName}? Esta acción no se puede deshacer.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeletingId(user.id);
+              await deleteUser(user.id);
+            } catch (e: any) {
+              Alert.alert(
+                "Error",
+                e?.message ??
+                  "No se pudo eliminar el usuario. Intenta de nuevo."
+              );
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Actualiza el usuario y cierra el modal si todo sale bien
+  const handleUpdate = async (
+    user: User,
+    changes: UserChanges
+  ) => {
     try {
-      await deleteUser(user.id);
-      setSelectedUser(null);
+      await updateUser(user.id, changes);
+      setEditingId(null);
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo eliminar el usuario. Intenta de nuevo.");
+      Alert.alert(
+        "Error",
+        e?.message ?? "No se pudo actualizar el usuario."
+      );
     }
   };
 
@@ -36,41 +104,58 @@ export default function ListUsersView() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={refresh}
-          tintColor="#FFFFFF"    // iOS
-          colors={["#5E35B1"]}   // Android
+          tintColor="#FFFFFF"
+          colors={["#5E35B1"]}
         />
-      }>
+      }
+    >
       <View style={styles.container}>
         <Text style={styles.subtitle}>
           Consulta los usuarios registrados en SIGEC
         </Text>
 
+        <SearchInput
+          value={searchName}
+          onChangeText={setSearchName}
+          placeholder="Buscar usuario por nombre..."
+        />
+
         {loading && <ActivityIndicator color="#FFFFFF" />}
+
         {error && <Text style={styles.email}>{error}</Text>}
 
         {!loading && !error && (
           <>
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryNumber}>{users.length}</Text>
-              <Text style={styles.summaryText}>Usuarios registrados</Text>
+              <Text style={styles.summaryNumber}>
+                {users.length}
+              </Text>
+              <Text style={styles.summaryText}>
+                Usuarios registrados
+              </Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Lista de usuarios</Text>
+            <Text style={styles.sectionTitle}>
+              Lista de usuarios
+            </Text>
 
-            {users.map((user) => (
-              // Pressable hace tocable la tarjeta: al tocarla se abre el modal con ese usuario
-              <Pressable
-                key={user.id}
-                style={styles.userCard}
-                onPress={() => setSelectedUser(user)}
-              >
+            {filteredUsers.map((user) => (
+              <View key={user.id} style={styles.userCard}>
                 <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{user.fullName.charAt(0)}</Text>
+                  <Text style={styles.avatarText}>
+                    {user.fullName.charAt(0)}
+                  </Text>
                 </View>
 
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{user.fullName}</Text>
-                  <Text style={styles.email}>{user.email}</Text>
+                  <Text style={styles.userName}>
+                    {user.fullName}
+                  </Text>
+
+                  <Text style={styles.email}>
+                    {user.email}
+                  </Text>
+
                   <Text style={styles.email}>
                     Miembro desde:{" "}
                     {user.createdAt.toLocaleDateString("es-MX", {
@@ -81,28 +166,75 @@ export default function ListUsersView() {
                   </Text>
 
                   <View style={styles.details}>
-                    <Text style={styles.role}>{roleLabel[user.role]}</Text>
+                    <Text style={styles.role}>
+                      {roleLabel[user.role]}
+                    </Text>
+
                     <Text
                       style={[
                         styles.status,
-                        user.active ? styles.active : styles.inactive,
+                        user.active
+                          ? styles.active
+                          : styles.inactive,
                       ]}
                     >
                       {user.active ? "Activo" : "Inactivo"}
                     </Text>
                   </View>
                 </View>
-              </Pressable>
+
+                <View style={styles.actions}>
+                  <Pressable
+                    onPress={() => setEditingId(user.id)}
+                    hitSlop={10}
+                    accessibilityLabel={`Editar a ${user.fullName}`}
+                  >
+                    <AntDesign
+                      name="edit"
+                      size={24}
+                      color="#FFFFFF"
+                    />
+                  </Pressable>
+
+                  {/* El administrador no puede eliminarse a sí mismo */}
+                  {user.id !== session?.userId && (
+                    <Pressable
+                      onPress={() => confirmDelete(user)}
+                      disabled={deletingId === user.id}
+                      hitSlop={10}
+                      accessibilityLabel={`Eliminar a ${user.fullName}`}
+                    >
+                      {deletingId === user.id ? (
+                        <ActivityIndicator color="#F13C3C" />
+                      ) : (
+                        <AntDesign
+                          name="delete"
+                          size={24}
+                          color="#E64141"
+                        />
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              </View>
             ))}
+
+            {/* Mensaje cuando la búsqueda no encuentra coincidencias */}
+            {filteredUsers.length === 0 && (
+              <Text style={styles.emptyMessage}>
+                {searchName.trim()
+                  ? "No se encontraron usuarios con ese nombre."
+                  : "No hay usuarios registrados."}
+              </Text>
+            )}
           </>
         )}
       </View>
 
-      {/* El modal solo se muestra cuando hay un usuario seleccionado */}
-      <UserDetailModal
-        user={selectedUser}
-        onClose={() => setSelectedUser(null)}
-        onDelete={handleDelete}
+      <EditUserModal
+        user={editingUser}
+        onClose={() => setEditingId(null)}
+        onSave={handleUpdate}
       />
     </GradientScreen>
   );
@@ -208,5 +340,16 @@ const styles = StyleSheet.create({
   inactive: {
     color: "#FCA5A5",
     backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  actions: {
+    marginLeft: 10,
+    gap: 20,
+    alignItems: "center",
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: "#D0C6E5",
+    textAlign: "center",
+    marginTop: 15,
   },
 });
