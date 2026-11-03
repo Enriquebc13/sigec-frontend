@@ -23,4 +23,10 @@ export class PropertyApiRepository implements PropertyRepository {
       images: (p.images ?? []).map((img) => ({ id: img.id, url: img.url })),
     }));
   }
+
+  async delete(id: string): Promise<void> {
+    await apiClient<{ message: string }>(`/properties/${id}`, {
+      method: "DELETE",
+    });
+  }
 }

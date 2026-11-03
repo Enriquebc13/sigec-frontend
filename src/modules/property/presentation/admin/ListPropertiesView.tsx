@@ -1,5 +1,5 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
 
@@ -18,7 +18,31 @@ const statusLabels: Record<string, string> = {
 
 export default function ListPropertiesView() {
 
-  const { properties, loading, error } = useProperties();
+  const { properties, loading, error, remove } = useProperties();
+
+  const confirmDelete = (id: string, title: string) => {
+    Alert.alert(
+      "Eliminar propiedad",
+      `¿Seguro que quieres eliminar "${title}"? También se borrarán sus fotos.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await remove(id);
+            } catch (e) {
+              Alert.alert(
+                "Error",
+                e instanceof Error ? e.message : "No se pudo eliminar la propiedad."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -149,7 +173,16 @@ export default function ListPropertiesView() {
                 {statusLabels[property.status]}
               </Text>
             </View>
+
+            <Pressable
+              style={styles.deleteButton}
+              onPress={() => confirmDelete(property.id, property.title)}
+            >
+              <Text style={styles.deleteText}>Eliminar</Text>
+            </Pressable>
           </View>
+
+
         ))}
       </View>
     </GradientScreen>
@@ -215,7 +248,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
   },
-    cover: {
+  cover: {
     width: "100%",
     height: 160,
     borderRadius: 12,
@@ -312,5 +345,17 @@ const styles = StyleSheet.create({
   unavailable: {
     color: "#FCA5A5",
     backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  deleteButton: {
+    marginTop: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  deleteText: {
+    color: "#FCA5A5",
+    fontWeight: "bold",
+    fontSize: 13,
   },
 });
