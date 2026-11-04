@@ -1,4 +1,6 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
@@ -18,7 +20,13 @@ const statusLabels: Record<string, string> = {
 
 export default function ListPropertiesView() {
 
-  const { properties, loading, error, remove } = useProperties();
+  const { properties, loading, error, remove, reload } = useProperties();
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
 
   const confirmDelete = (id: string, title: string) => {
     Alert.alert(
@@ -81,6 +89,12 @@ export default function ListPropertiesView() {
           </Text>
         </View>
 
+        <Pressable
+          style={styles.newButton}
+          onPress={() => router.navigate("/createProperty")}
+        >
+          <Text style={styles.newButtonText}>+ Nueva propiedad</Text>
+        </Pressable>
         <Text style={styles.sectionTitle}>
           Lista de propiedades
         </Text>
@@ -214,6 +228,18 @@ const styles = StyleSheet.create({
     color: "#D0C6E5",
     marginTop: 6,
     marginBottom: 22,
+  },
+  newButton: {
+    backgroundColor: "#7C4DFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  newButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   summaryCard: {
     backgroundColor: "rgba(255,255,255,0.10)",

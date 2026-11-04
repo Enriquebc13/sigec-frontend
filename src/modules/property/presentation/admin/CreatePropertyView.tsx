@@ -1,14 +1,23 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { CreatePropertyInput } from "../../domain/entities/create-property-input";
+import { useCreateProperty } from "./hooks/use-create-property";
+
+const typeOptions = [
+  { label: "Local", value: "LOCAL" },
+  { label: "Oficina", value: "OFFICE" },
+  { label: "Bodega", value: "WAREHOUSE" },
+] as const;
 
 export default function CreatePropertyView() {
   const [title, setTitle] = useState("");
@@ -17,17 +26,34 @@ export default function CreatePropertyView() {
   const [maintenanceCost, setMaintenanceCost] = useState("");
   const [dimensions, setDimensions] = useState("");
   const [floor, setFloor] = useState("");
-  const [type, setType] = useState("LOCAL");
+  const [type, setType] = useState<CreatePropertyInput["type"]>("LOCAL");
   const [amenities, setAmenities] = useState("");
-
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
 
-  const handleCreate = () => {
+
+  const { create, saving } = useCreateProperty();
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setMaintenanceCost("");
+    setDimensions("");
+    setFloor("");
+    setType("LOCAL");
+    setAmenities("");
+    setStreet("");
+    setCity("");
+    setState("");
+    setZipCode("");
+  };
+
+  const handleCreate = async () => {
     if (!title.trim() || !price.trim() || !street.trim() ||
-        !city.trim() || !state.trim() || !zipCode.trim()) {
+      !city.trim() || !state.trim() || !zipCode.trim()) {
       Alert.alert(
         "Campos obligatorios",
         "Completa el título, precio y dirección de la propiedad."
@@ -56,16 +82,15 @@ export default function CreatePropertyView() {
       return;
     }
 
-    const propertyData = {
+    const propertyData: Omit<CreatePropertyInput, "userId"> = {
       title: title.trim(),
-      description: description.trim() || null,
+      description: description.trim() || undefined,
       price: numericPrice,
-      maintenanceCost: numericMaintenance,
-      dimensions: dimensions.trim() || null,
-      floor: numericFloor,
+      maintenanceCost: numericMaintenance ?? undefined,
+      dimensions: dimensions.trim() || undefined,
+      floor: numericFloor ?? undefined,
       type,
-      status: "AVAILABLE",
-      amenities: amenities.trim() || null,
+      amenities: amenities.trim() || undefined,
       address: {
         street: street.trim(),
         city: city.trim(),
@@ -74,12 +99,17 @@ export default function CreatePropertyView() {
       },
     };
 
-    console.log("Datos de la propiedad:", propertyData);
-
-    Alert.alert(
-      "Formulario validado",
-      "Los datos están listos. Falta conectar el formulario con la API para guardar la propiedad."
-    );
+    try {
+      await create(propertyData);
+      Alert.alert("Propiedad registrada", "La propiedad se guardó correctamente.");
+      resetForm();
+      router.navigate("/properties");
+    } catch (e) {
+      Alert.alert(
+        "Error",
+        e instanceof Error ? e.message : "No se pudo registrar la propiedad."
+      );
+    }
   };
 
   return (
@@ -112,11 +142,7 @@ export default function CreatePropertyView() {
 
         <Text style={styles.label}>Tipo de propiedad *</Text>
         <View style={styles.typeContainer}>
-          {[
-            { label: "Local", value: "LOCAL" },
-            { label: "Oficina", value: "OFFICE" },
-            { label: "Bodega", value: "WAREHOUSE" },
-          ].map((item) => (
+          {typeOptions.map((item) => (
             <TouchableOpacity
               key={item.value}
               style={[
@@ -240,8 +266,11 @@ export default function CreatePropertyView() {
           style={styles.submitButton}
           onPress={handleCreate}
           activeOpacity={0.8}
+          disabled={saving}
         >
-          <Text style={styles.submitText}>Registrar propiedad</Text>
+          <Text style={styles.submitText}>
+            {saving ? "Guardando..." : "Registrar propiedad"}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.note}>
