@@ -67,6 +67,7 @@
 // }
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const TIMEOUT_MS = 10000;
+const UPLOAD_TIMEOUT_MS = 60000;
 
 // Token de la sesión actual. Lo asigna ApiAuthProvider al iniciar sesión
 // o al restaurar la sesión guardada.
@@ -110,8 +111,13 @@ export async function apiClient<T>(
 ): Promise<T> {
   // Crea un controlador para poder cancelar la petición si tarda demasiado.
   const controller = new AbortController();
-  // Establece el tiempo máximo de espera para la petición.
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  // Si se envía un archivo (FormData) se da más tiempo a la petición.
+  const isFormData = options.body instanceof FormData;
+  const timeout = setTimeout(
+    () => controller.abort(),
+    isFormData ? UPLOAD_TIMEOUT_MS : TIMEOUT_MS,
+  );
 
   let res: Response;
   // Realiza la petición al servidor utilizando la URL base y la ruta indicada.
@@ -120,7 +126,10 @@ export async function apiClient<T>(
       ...options,
       signal: controller.signal,
       headers: {
-        'Content-Type': 'application/json',
+        // Con FormData no se pone Content-Type a mano: React Native lo agrega
+        // solo e incluye un código (boundary) que el servidor usa para saber
+        // dónde termina un campo y empieza el siguiente.
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...options.headers,
       },
