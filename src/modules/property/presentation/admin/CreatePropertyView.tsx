@@ -1,8 +1,10 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { CreatePropertyInput } from "../../domain/entities/create-property-input";
+import { ImageFile } from "../../domain/entities/image-file";
 import { useCreateProperty } from "./hooks/use-create-property";
 
 const typeOptions = [
@@ -32,7 +35,7 @@ export default function CreatePropertyView() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
-
+  const [images, setImages] = useState<ImageFile[]>([]);
 
   const { create, saving } = useCreateProperty();
 
@@ -49,6 +52,28 @@ export default function CreatePropertyView() {
     setCity("");
     setState("");
     setZipCode("");
+    setImages([]);
+  };
+
+  const pickImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: 10,
+      quality: 0.7,
+    });
+    if (result.canceled) return;
+
+    const picked: ImageFile[] = result.assets.map((asset, index) => ({
+      uri: asset.uri,
+      name: asset.fileName ?? `foto-${Date.now()}-${index}.jpg`,
+      type: asset.mimeType ?? "image/jpeg",
+    }));
+    setImages((prev) => [...prev, ...picked].slice(0, 10));
+  };
+
+  const removeImage = (uri: string) => {
+    setImages((prev) => prev.filter((image) => image.uri !== uri));
   };
 
   const handleCreate = async () => {
@@ -100,8 +125,13 @@ export default function CreatePropertyView() {
     };
 
     try {
-      await create(propertyData);
-      Alert.alert("Propiedad registrada", "La propiedad se guardó correctamente.");
+      const { failedImages } = await create(propertyData, images);
+      Alert.alert(
+        "Propiedad registrada",
+        failedImages > 0
+          ? `La propiedad se guardó, pero ${failedImages} foto(s) no se pudieron subir.`
+          : "La propiedad se guardó correctamente."
+      );
       resetForm();
       router.navigate("/properties");
     } catch (e) {
@@ -262,6 +292,36 @@ export default function CreatePropertyView() {
           keyboardType="number-pad"
         />
 
+        <Text style={styles.sectionTitle}>Fotos</Text>
+
+        <TouchableOpacity
+          style={styles.photoButton}
+          onPress={pickImages}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.photoButtonText}>+ Agregar fotos</Text>
+        </TouchableOpacity>
+
+        {images.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.previewRow}
+          >
+            {images.map((image) => (
+              <View key={image.uri} style={styles.previewItem}>
+                <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeImage(image.uri)}
+                >
+                  <Text style={styles.removeText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
         <TouchableOpacity
           style={styles.submitButton}
           onPress={handleCreate}
@@ -371,6 +431,47 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 12,
     marginBottom: 25,
+  },
+  photoButton: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    borderStyle: "dashed",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  photoButtonText: {
+    color: "#D0C6E5",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  previewRow: {
+    marginTop: 14,
+  },
+  previewItem: {
+    marginRight: 10,
+  },
+  previewImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  removeButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  removeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 

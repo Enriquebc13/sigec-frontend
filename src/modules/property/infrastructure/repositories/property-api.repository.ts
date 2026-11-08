@@ -1,9 +1,10 @@
 import { apiClient } from "@/core/http/api-client";
+import { File } from "expo-file-system";
 import { PropertyResponseDto } from "../../application/dtos/property-response.dto";
 import { CreatePropertyInput } from "../../domain/entities/create-property-input";
-import { Property } from "../../domain/entities/property.entity";
+import { ImageFile } from "../../domain/entities/image-file";
+import { Property, PropertyImage } from "../../domain/entities/property.entity";
 import { PropertyRepository } from "../../domain/interfaces/property.repository";
-
 function toProperty(p: PropertyResponseDto): Property {
   return {
     id: p.id,
@@ -39,5 +40,17 @@ export class PropertyApiRepository implements PropertyRepository {
     await apiClient<{ message: string }>(`/properties/${id}`, {
       method: "DELETE",
     });
+  }
+
+  async addImage(propertyId: string, image: ImageFile): Promise<PropertyImage> {
+    const form = new FormData();
+    form.append("file", new File(image.uri) as unknown as Blob);
+    form.append("propertyId", propertyId);
+
+    const data = await apiClient<{ id: string; url: string }>("/images", {
+      method: "POST",
+      body: form,
+    });
+    return { id: data.id, url: data.url };
   }
 }
