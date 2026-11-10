@@ -2,6 +2,7 @@ import { GradientScreen } from "@/components/ui/GradientScreen";
 import { OptionCard } from "@/components/ui/OptionCard";
 import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
 import { useUserById } from "@/modules/users/presentation/admin/hooks/use-user-by-id";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import {
   StyleSheet,
   Text,
@@ -12,23 +13,24 @@ export default function ClientHomeView() {
    const { session, logout } = useApiAuth();
  const { user} = useUserById(session?.userId);
   const displayName = user?.fullName || "Usuario";
+
   const options = [
     {
-      icon: "🏢",
       title: "Espacios disponibles",
       description: "Explora los espacios comerciales disponibles",
+      icon: <AntDesign name="home" size={24} color="#D7C9FF" />,
       route: "/(client)/properties" as const,
     },
     {
-      icon: "🔔",
       title: "Novedades",
       description: "Consulta información y novedades del sistema",
-      route: "/(client)/home" as const,
+      icon: <AntDesign name="notification" size={24} color="#D7C9FF" />,
+      route: "/(client)/information" as const,
     },
     {
-      icon: "📋",
       title: "Mis solicitudes",
       description: "Revisa el estado de tus solicitudes",
+      icon: <AntDesign name="ordered-list" size={24} color="#D7C9FF" />,
       route: "/(client)/requests" as const,
     },
   ];

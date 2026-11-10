@@ -25,14 +25,28 @@ export default function RegisterView() {
 
   const { register, submitting, error } = useRegister();
 
-  const handleSubmit = async () => {
-    const ok = await register({ name, lastname, email, password });
+const handleSubmit = async () => {
+  const ok = await register({ name, lastname, email, password });
 
-    if (ok) {
-      Alert.alert("Cuenta creada", "Ya puedes iniciar sesión.");
-      router.replace("/login");
-    }
-  };
+  if (ok) {
+    Alert.alert(
+      "Cuenta creada",
+      "Tu cuenta se ha registrado correctamente. Ya puedes iniciar sesión.",
+      [
+        {
+          text: "Aceptar",
+          onPress: () => router.replace("/login"),
+        },
+      ]
+    );
+  } else if (error) {
+    Alert.alert(
+      "No se pudo crear la cuenta",
+      error,
+      [{ text: "Aceptar" }]
+    );
+  }
+};
 
   return (
     <LinearGradient
@@ -119,7 +133,7 @@ export default function RegisterView() {
               </TouchableOpacity>
             </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
+            {/* {error && <Text style={styles.errorText}>{error}</Text>} */}
 
             <TouchableOpacity
               style={[

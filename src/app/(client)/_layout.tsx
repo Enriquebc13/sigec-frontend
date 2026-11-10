@@ -53,6 +53,16 @@ export default function ClientLayout() {
           ),
         }}
       />
+       <Drawer.Screen
+        name="information"
+        options={{
+          title: 'Conoce Sigec',
+          drawerLabel: 'Conoce Sigec',
+          drawerIcon: ({ color, size }) => (
+            <AntDesign name="info" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
+          ),
+        }}
+      />
     </Drawer>
   );
 }

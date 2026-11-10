@@ -1,69 +1,173 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { OptionCard } from "@/components/ui/OptionCard";
-import { useAuth } from "@/modules/auth/presentation/context/AuthProvider";
+import { Slice, StatsPieCard } from "@/components/ui/StatsPieCard";
+import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
+import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
+import { useUsers } from "@/modules/users/presentation/admin/hooks/use-users";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { router } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
+const PROPERTY_STATUSES = [
+  {
+    key: "AVAILABLE",
+    label: "Disponibles",
+    color: "#22C55E",
+    icon: "check-circle" as const,
+  },
+  {
+    key: "RESERVED",
+    label: "Reservados",
+    color: "#FBBF24",
+    icon: "clock-circle" as const,
+  },
+  {
+    key: "RENTED",
+    label: "Rentados",
+    color: "#60A5FA",
+    icon: "key" as const,
+  },
+  {
+    key: "UNAVAILABLE",
+    label: "No disponibles",
+    color: "#F87171",
+    icon: "close-circle" as const,
+  },
+];
+
 export default function AdminHomeView() {
-  const { user } = useAuth();
+  const { session } = useApiAuth();
+  const {
+    users,
+    loading: loadingUsers,
+    error: usersError,
+    refresh: refreshUsers,
+  } = useUsers();
+  const {
+    properties,
+    loading: loadingProperties,
+    error: propertiesError,
+    reload: reloadProperties,
+  } = useProperties();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull to refresh: recarga las dos fuentes de datos a la vez
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refreshUsers(), reloadProperties()]);
+    setRefreshing(false);
+  }, [refreshUsers, reloadProperties]);
+
+  // Usuarios por rol
+  const userSlices: Slice[] = useMemo(
+    () => [
+      {
+        label: "Administradores",
+        value: users.filter((u) => u.role === "ADMIN").length,
+        color: "#8B5CF6",
+        icon: "idcard" as const,
+      },
+      {
+        label: "Clientes",
+        value: users.filter((u) => u.role === "CLIENT").length,
+        color: "#60A5FA",
+        icon: "user" as const,
+      },
+    ],
+    [users],
+  );
+
+  // Propiedades por estado
+  const propertySlices: Slice[] = useMemo(
+    () =>
+      PROPERTY_STATUSES.map((s) => ({
+        label: s.label,
+        value: properties.filter((p) => String(p.status) === s.key).length,
+        color: s.color,
+        icon: s.icon,
+      })),
+    [properties],
+  );
+
 
   const options = [
     {
       title: "Usuarios",
       description: "Administrar las cuentas registradas",
-      icon: "👥",
+      icon: <AntDesign name="team" size={24} color="#D7C9FF" />,
       route: "/(admin)/users" as const,
     },
     {
       title: "Propiedades",
       description: "Consultar y administrar propiedades",
-      icon: "🏢",
+      icon: <AntDesign name="home" size={24} color="#D7C9FF" />,
       route: "/(admin)/properties" as const,
     },
     {
       title: "Solicitudes",
       description: "Revisar las solicitudes de los clientes",
-      icon: "📋",
+      icon: <AntDesign name="ordered-list" size={24} color="#D7C9FF" />,
       route: "/(admin)/requests" as const,
     },
-
   ];
 
   return (
-    <GradientScreen>
+    <GradientScreen
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#FFFFFF"    // iOS
+          colors={["#5E35B1"]}   // Android
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.subtitle}>SIGEC</Text>
         <Text style={styles.title}>Panel de administración</Text>
         <Text style={styles.welcome}>¡Bienvenido, administrador!</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-      </View>
-
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Panel general</Text>
-        <Text style={styles.summaryText}>
-          Administra los usuarios, las propiedades, los espacios comerciales
-          y las solicitudes desde un solo lugar.
-        </Text>
+        <Text style={styles.email}>{session?.email}</Text>
       </View>
 
       <Text style={styles.sectionTitle}>Gestión del sistema</Text>
-      {/* TARJETAS */}
       {options.map((option) => (
         <OptionCard key={option.title} {...option} />
       ))}
-      {/* key funciona como un identificador único para que React
-       pueda distinguir cada elemento de una lista. */}
+
+      <Text style={[styles.sectionTitle, styles.statsTitle]}>
+        Resumen del sistema
+      </Text>
+
+      <StatsPieCard
+        title="Usuarios"
+        subtitle="Distribución por rol"
+        icon={<AntDesign name="team" size={20} color="#D7C9FF" />}
+        slices={userSlices}
+        loading={loadingUsers && users.length === 0}
+        error={usersError}
+      />
+
+      <StatsPieCard
+        title="Espacios"
+        subtitle="Distribución por estado"
+        icon={<AntDesign name="home" size={20} color="#D7C9FF" />}
+        slices={propertySlices}
+        loading={loadingProperties && properties.length === 0}
+        error={propertiesError}
+      />
 
       <TouchableOpacity
         style={styles.profileButton}
         activeOpacity={0.8}
-        onPress={() => router.replace('/(admin)/profile')}
-
+        onPress={() => router.replace("/(admin)/profile")}
       >
         <Text style={styles.profileButtonText}>Mi perfil  →</Text>
       </TouchableOpacity>
@@ -72,12 +176,6 @@ export default function AdminHomeView() {
 }
 
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-  },
   header: {
     marginBottom: 25,
   },
@@ -103,71 +201,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 6,
   },
-  summaryCard: {
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.09)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    marginBottom: 28,
-  },
-  summaryTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  summaryText: {
-    color: "#D6D0E3",
-    fontSize: 14,
-    lineHeight: 22,
-  },
   sectionTitle: {
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
   },
-  optionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    marginBottom: 12,
-    borderRadius: 18,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.10)",
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: "rgba(94, 53, 177, 0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 13,
-  },
-  icon: {
-    fontSize: 23,
-  },
-  optionInfo: {
-    flex: 1,
-  },
-  optionTitle: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  optionDescription: {
-    color: "#C8C2D2",
-    fontSize: 12,
-    marginTop: 5,
-    lineHeight: 17,
-  },
-  arrow: {
-    color: "#C7B5FF",
-    fontSize: 28,
-    marginLeft: 8,
+  statsTitle: {
+    marginTop: 18,
   },
   profileButton: {
     marginTop: 12,

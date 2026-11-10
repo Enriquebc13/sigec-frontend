@@ -1,8 +1,9 @@
 import { Href, router } from "expo-router";
+import { ReactNode } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
-  icon: string;
+  icon: ReactNode;
   title: string;
   description: string;
   route?: Href;
@@ -23,7 +24,7 @@ export function OptionCard({ icon, title, description, route, onPress }: Props) 
       disabled={!route && !onPress}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.icon}>{icon}</Text>
+        {typeof icon === "string" ? <Text style={styles.icon}>{icon}</Text> : icon}
       </View>
 
       <View style={styles.optionInfo}>
@@ -37,7 +38,7 @@ export function OptionCard({ icon, title, description, route, onPress }: Props) 
 }
 
 const styles = StyleSheet.create({
-optionCard: {
+  optionCard: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
