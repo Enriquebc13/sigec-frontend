@@ -188,12 +188,26 @@ export default function ListPropertiesView() {
               </Text>
             </View>
 
-            <Pressable
-              style={styles.deleteButton}
-              onPress={() => confirmDelete(property.id, property.title)}
-            >
-              <Text style={styles.deleteText}>Eliminar</Text>
-            </Pressable>
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() =>
+                  router.navigate({
+                    pathname: "/editProperty",
+                    params: { id: property.id },
+                  })
+                }
+              >
+                <Text style={styles.editText}>Editar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => confirmDelete(property.id, property.title)}
+              >
+                <Text style={styles.deleteText}>Eliminar</Text>
+              </Pressable>
+            </View>
           </View>
 
 
@@ -217,11 +231,6 @@ const styles = StyleSheet.create({
     color: "#FCA5A5",
     fontSize: 14,
     textAlign: "center",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 14,
@@ -372,8 +381,25 @@ const styles = StyleSheet.create({
     color: "#FCA5A5",
     backgroundColor: "rgba(239,68,68,0.15)",
   },
-  deleteButton: {
+  actions: {
+    flexDirection: "row",
+    gap: 10,
     marginTop: 14,
+  },
+  editButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(139,92,246,0.20)",
+  },
+  editText: {
+    color: "#C7B5FF",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  deleteButton: {
+    flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
     alignItems: "center",

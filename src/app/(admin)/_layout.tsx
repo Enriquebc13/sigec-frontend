@@ -37,7 +37,7 @@ export default function AdminLayout() {
           title: "Propiedades",
           drawerLabel: "Propiedades",
           drawerIcon: ({ color, size }) => (
-            <AntDesign name="shop" size={size}color={typeof color === "string" ? color : "#A99CBD"} />
+            <AntDesign name="shop" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
           ),
         }}
       />
@@ -48,8 +48,16 @@ export default function AdminLayout() {
           title: "Crear propiedad",
           drawerLabel: "Crear propiedad",
           drawerIcon: ({ color, size }) => (
-            <AntDesign name="plus-square" size={size} color={typeof color === "string" ? color : "#A99CBD"}/>
+            <AntDesign name="plus-square" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
           ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="editProperty"
+        options={{
+          title: "Editar propiedad",
+          drawerItemStyle: { display: "none" },
         }}
       />
 
@@ -70,7 +78,7 @@ export default function AdminLayout() {
           title: "Perfil",
           drawerLabel: "Perfil",
           drawerIcon: ({ color, size }) => (
-            <AntDesign name="user" size={size} color={typeof color === "string" ? color : "#A99CBD"}/>
+            <AntDesign name="user" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
           ),
         }}
       />
