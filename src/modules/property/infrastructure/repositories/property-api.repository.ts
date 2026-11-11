@@ -4,6 +4,7 @@ import { PropertyResponseDto } from "../../application/dtos/property-response.dt
 import { CreatePropertyInput } from "../../domain/entities/create-property-input";
 import { ImageFile } from "../../domain/entities/image-file";
 import { Property, PropertyImage } from "../../domain/entities/property.entity";
+import { UpdatePropertyInput } from "../../domain/entities/update-property-input";
 import { PropertyRepository } from "../../domain/interfaces/property.repository";
 function toProperty(p: PropertyResponseDto): Property {
   return {
@@ -18,6 +19,14 @@ function toProperty(p: PropertyResponseDto): Property {
     type: p.type,
     status: p.status,
     amenities: p.amenities ?? null,
+    address: p.address
+      ? {
+        street: p.address.street,
+        city: p.address.city,
+        state: p.address.state,
+        zipCode: p.address.zipCode,
+      }
+      : null,
     images: (p.images ?? []).map((img) => ({ id: img.id, url: img.url })),
   };
 }
@@ -31,6 +40,19 @@ export class PropertyApiRepository implements PropertyRepository {
   async create(input: CreatePropertyInput): Promise<Property> {
     const data = await apiClient<PropertyResponseDto>("/properties", {
       method: "POST",
+      body: JSON.stringify(input),
+    });
+    return toProperty(data);
+  }
+  
+  async getById(id: string): Promise<Property> {
+    const data = await apiClient<PropertyResponseDto>(`/properties/${id}`);
+    return toProperty(data);
+  }
+
+  async update(id: string, input: UpdatePropertyInput): Promise<Property> {
+    const data = await apiClient<PropertyResponseDto>(`/properties/${id}`, {
+      method: "PUT",
       body: JSON.stringify(input),
     });
     return toProperty(data);

@@ -3,6 +3,13 @@ export interface PropertyImage {
   url: string;
 }
 
+export interface PropertyAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
 export interface Property {
   id: string;
   title: string;
@@ -14,5 +21,6 @@ export interface Property {
   type: string; // LOCAL | OFFICE | WAREHOUSE
   status: string; // AVAILABLE | RESERVED | RENTED | UNAVAILABLE
   amenities: string | null;
+  address: PropertyAddress | null;
   images: PropertyImage[];
 }
