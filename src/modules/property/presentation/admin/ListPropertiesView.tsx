@@ -1,6 +1,7 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
@@ -21,6 +22,31 @@ const statusLabels: Record<string, string> = {
 export default function ListPropertiesView() {
 
   const { properties, loading, error, remove, reload } = useProperties();
+
+  const [searchText, setSearchText] = useState("");
+  //Para filtrar propiedades
+  // Quita acentos y mayúsculas
+  const normalize = (text: string) =>
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+
+  const filteredProperties = properties.filter((property) => {
+    const query = normalize(searchText.trim());
+    if (!query) return true;
+
+    const searchable = [
+      property.title,
+      property.address?.street,
+      property.address?.city,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return normalize(searchable).includes(query);
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -98,8 +124,15 @@ export default function ListPropertiesView() {
         <Text style={styles.sectionTitle}>
           Lista de propiedades
         </Text>
+        <SearchInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Buscar por título, calle o ciudad..."
+        />
 
-        {properties.map((property) => (
+        {filteredProperties.map((property) => (
+
+
           <View key={property.id} style={styles.propertyCard}>
             {property.images.length > 0 && (
               <Image
@@ -212,6 +245,13 @@ export default function ListPropertiesView() {
 
 
         ))}
+        {filteredProperties.length === 0 && (
+          <Text style={styles.emptyMessage}>
+            {searchText.trim()
+              ? "No se encontraron propiedades con esa búsqueda."
+              : "No hay propiedades registradas."}
+          </Text>
+        )}
       </View>
     </GradientScreen>
   );
@@ -409,5 +449,11 @@ const styles = StyleSheet.create({
     color: "#FCA5A5",
     fontWeight: "bold",
     fontSize: 13,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: "#D0C6E5",
+    textAlign: "center",
+    marginTop: 15,
   },
 });
