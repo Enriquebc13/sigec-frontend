@@ -1,5 +1,6 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -8,6 +9,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { ImageFile } from "../../domain/entities/image-file";
 import { PropertyForm, PropertyFormData } from "../components/PropertyForm";
 import { useEditProperty } from "./hooks/use-edit-property";
 
@@ -29,9 +31,28 @@ export default function EditPropertyView() {
 }
 
 function EditPropertyContent({ id }: { id: string }) {
-    const { property, loading, error, saving, update } = useEditProperty(id);
+    const { property, loading, error, saving, update, syncImages, reload } = useEditProperty(id);
 
-    const handleSubmit = async (data: PropertyFormData) => {
+    // Sirve para reiniciar el formulario cada vez que se vuelve a esta pantalla
+    const [formKey, setFormKey] = useState(0);
+
+    useFocusEffect(
+        useCallback(() => {
+            let active = true;
+            reload().then(() => {
+                if (active) setFormKey((k) => k + 1);
+            });
+            return () => {
+                active = false;
+            };
+        }, [reload])
+    );
+
+    const handleSubmit = async (
+        data: PropertyFormData,
+        images: ImageFile[],
+        removedImageIds: string[]
+    ) => {
         try {
             await update({
                 title: data.title,
@@ -45,9 +66,14 @@ function EditPropertyContent({ id }: { id: string }) {
                 amenities: data.amenities,
                 address: data.address,
             });
+
+            const failed = await syncImages(images, removedImageIds);
+
             Alert.alert(
                 "Propiedad actualizada",
-                "Los cambios se guardaron correctamente."
+                failed > 0
+                    ? `Los datos se guardaron, pero ${failed} cambio(s) de fotos no se pudieron aplicar. Puedes intentarlo de nuevo editando la propiedad.`
+                    : "Los cambios se guardaron correctamente."
             );
             router.navigate("/properties");
         } catch (e) {
@@ -57,7 +83,6 @@ function EditPropertyContent({ id }: { id: string }) {
             );
         }
     };
-
     if (loading) {
         return (
             <GradientScreen>
@@ -88,11 +113,12 @@ function EditPropertyContent({ id }: { id: string }) {
                 </Text>
 
                 <PropertyForm
-                    key={property.id}
+                    key={`${property.id}-${formKey}`}
                     initialProperty={property}
                     submitLabel="Guardar cambios"
                     saving={saving}
                     showStatus
+                    showPhotos
                     onSubmit={handleSubmit}
                 />
             </ScrollView>

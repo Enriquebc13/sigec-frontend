@@ -1,8 +1,9 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
 
@@ -134,13 +135,7 @@ export default function ListPropertiesView() {
 
 
           <View key={property.id} style={styles.propertyCard}>
-            {property.images.length > 0 && (
-              <Image
-                source={{ uri: property.images[0].url }}
-                style={styles.cover}
-                resizeMode="cover"
-              />
-            )}
+            <PropertyImageCarousel images={property.images} />
 
             <View style={styles.cardHeader}>
               <View style={styles.iconContainer}>

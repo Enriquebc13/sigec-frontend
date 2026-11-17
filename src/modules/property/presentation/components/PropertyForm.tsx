@@ -365,8 +365,7 @@ export function PropertyForm({
 
       {showPhotos && (
         <>
-          <Text style={styles.sectionTitle}>Fotos</Text>
-
+          <Text style={styles.sectionTitle}>Fotos ({totalPhotos}/10)</Text>
           <TouchableOpacity
             style={styles.photoButton}
             onPress={pickImages}
@@ -381,9 +380,12 @@ export function PropertyForm({
               showsHorizontalScrollIndicator={false}
               style={styles.previewRow}
             >
-              {currentImages.map((image) => (
+              {currentImages.map((image, index) => (
                 <View key={image.id} style={styles.previewItem}>
                   <Image source={{ uri: image.url }} style={styles.previewImage} />
+                  <View style={styles.numberBadge}>
+                    <Text style={styles.numberText}>{index + 1}</Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => removeCurrentImage(image.id)}
@@ -393,9 +395,14 @@ export function PropertyForm({
                 </View>
               ))}
 
-              {images.map((image) => (
+              {images.map((image, index) => (
                 <View key={image.uri} style={styles.previewItem}>
                   <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                  <View style={styles.numberBadge}>
+                    <Text style={styles.numberText}>
+                      {currentImages.length + index + 1}
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => removeImage(image.uri)}
@@ -552,6 +559,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   removeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  numberBadge: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    backgroundColor: "rgba(124,77,255,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  numberText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "bold",
