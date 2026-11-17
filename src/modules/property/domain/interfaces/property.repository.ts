@@ -10,4 +10,6 @@ export interface PropertyRepository {
   update(id: string, input: UpdatePropertyInput): Promise<Property>;
   delete(id: string): Promise<void>;
   addImage(propertyId: string, image: ImageFile): Promise<PropertyImage>;
+  deleteImage(imageId: string): Promise<void>;
+
 }

@@ -1,14 +1,14 @@
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { ImageFile } from "../../domain/entities/image-file";
 import { Property } from "../../domain/entities/property.entity";
@@ -55,7 +55,8 @@ interface PropertyFormProps {
   saving: boolean;
   showStatus?: boolean;
   showPhotos?: boolean;
-  onSubmit: (data: PropertyFormData, images: ImageFile[]) => Promise<void>;
+  onSubmit: (data: PropertyFormData, images: ImageFile[],
+    removedImageIds: string[]) => Promise<void>;
 }
 
 export function PropertyForm({
@@ -95,11 +96,25 @@ export function PropertyForm({
   const [zipCode, setZipCode] = useState(initialProperty?.address?.zipCode ?? "");
   const [images, setImages] = useState<ImageFile[]>([]);
 
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+
+  // Fotos que ya tiene la propiedad y que el usuario no ha quitado
+  const currentImages = (initialProperty?.images ?? []).filter(
+    (image) => !removedImageIds.includes(image.id)
+  );
+  const totalPhotos = currentImages.length + images.length;
+
   const pickImages = async () => {
+    const remaining = 10 - totalPhotos;
+    if (remaining <= 0) {
+      Alert.alert("Límite de fotos", "Una propiedad puede tener máximo 10 fotos.");
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
-      selectionLimit: 10,
+      selectionLimit: remaining,
       quality: 0.7,
     });
     if (result.canceled) return;
@@ -109,11 +124,15 @@ export function PropertyForm({
       name: asset.fileName ?? `foto-${Date.now()}-${index}.jpg`,
       type: asset.mimeType ?? "image/jpeg",
     }));
-    setImages((prev) => [...prev, ...picked].slice(0, 10));
+    setImages((prev) => [...prev, ...picked.slice(0, remaining)]);
   };
 
   const removeImage = (uri: string) => {
     setImages((prev) => prev.filter((image) => image.uri !== uri));
+  };
+
+  const removeCurrentImage = (imageId: string) => {
+    setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
   const handleSubmit = async () => {
@@ -165,7 +184,9 @@ export function PropertyForm({
           zipCode: zipCode.trim(),
         },
       },
-      images
+      images,
+      removedImageIds
+
     );
   };
 
@@ -354,12 +375,24 @@ export function PropertyForm({
             <Text style={styles.photoButtonText}>+ Agregar fotos</Text>
           </TouchableOpacity>
 
-          {images.length > 0 && (
+          {(currentImages.length > 0 || images.length > 0) && (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.previewRow}
             >
+              {currentImages.map((image) => (
+                <View key={image.id} style={styles.previewItem}>
+                  <Image source={{ uri: image.url }} style={styles.previewImage} />
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeCurrentImage(image.id)}
+                  >
+                    <Text style={styles.removeText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
               {images.map((image) => (
                 <View key={image.uri} style={styles.previewItem}>
                   <Image source={{ uri: image.uri }} style={styles.previewImage} />

@@ -44,7 +44,7 @@ export class PropertyApiRepository implements PropertyRepository {
     });
     return toProperty(data);
   }
-  
+
   async getById(id: string): Promise<Property> {
     const data = await apiClient<PropertyResponseDto>(`/properties/${id}`);
     return toProperty(data);
@@ -74,5 +74,9 @@ export class PropertyApiRepository implements PropertyRepository {
       body: form,
     });
     return { id: data.id, url: data.url };
+  }
+
+  async deleteImage(imageId: string): Promise<void> {
+    await apiClient(`/images/${imageId}`, { method: "DELETE" });
   }
 }
