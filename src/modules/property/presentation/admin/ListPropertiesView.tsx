@@ -1,5 +1,9 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
 
@@ -18,7 +22,62 @@ const statusLabels: Record<string, string> = {
 
 export default function ListPropertiesView() {
 
-  const { properties, loading, error } = useProperties();
+  const { properties, loading, error, remove, reload } = useProperties();
+
+  const [searchText, setSearchText] = useState("");
+  //Para filtrar propiedades
+  // Quita acentos y mayúsculas
+  const normalize = (text: string) =>
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+
+  const filteredProperties = properties.filter((property) => {
+    const query = normalize(searchText.trim());
+    if (!query) return true;
+
+    const searchable = [
+      property.title,
+      property.address?.street,
+      property.address?.city,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return normalize(searchable).includes(query);
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
+
+  const confirmDelete = (id: string, title: string) => {
+    Alert.alert(
+      "Eliminar propiedad",
+      `¿Seguro que quieres eliminar "${title}"? También se borrarán sus fotos.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await remove(id);
+            } catch (e) {
+              Alert.alert(
+                "Error",
+                e instanceof Error ? e.message : "No se pudo eliminar la propiedad."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -57,19 +116,26 @@ export default function ListPropertiesView() {
           </Text>
         </View>
 
+        <Pressable
+          style={styles.newButton}
+          onPress={() => router.navigate("/createProperty")}
+        >
+          <Text style={styles.newButtonText}>+ Nueva propiedad</Text>
+        </Pressable>
         <Text style={styles.sectionTitle}>
           Lista de propiedades
         </Text>
+        <SearchInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Buscar por título, calle o ciudad..."
+        />
 
-        {properties.map((property) => (
+        {filteredProperties.map((property) => (
+
+
           <View key={property.id} style={styles.propertyCard}>
-            {property.images.length > 0 && (
-              <Image
-                source={{ uri: property.images[0].url }}
-                style={styles.cover}
-                resizeMode="cover"
-              />
-            )}
+            <PropertyImageCarousel images={property.images} />
 
             <View style={styles.cardHeader}>
               <View style={styles.iconContainer}>
@@ -149,8 +215,38 @@ export default function ListPropertiesView() {
                 {statusLabels[property.status]}
               </Text>
             </View>
+
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() =>
+                  router.navigate({
+                    pathname: "/editProperty",
+                    params: { id: property.id },
+                  })
+                }
+              >
+                <Text style={styles.editText}>Editar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => confirmDelete(property.id, property.title)}
+              >
+                <Text style={styles.deleteText}>Eliminar</Text>
+              </Pressable>
+            </View>
           </View>
+
+
         ))}
+        {filteredProperties.length === 0 && (
+          <Text style={styles.emptyMessage}>
+            {searchText.trim()
+              ? "No se encontraron propiedades con esa búsqueda."
+              : "No hay propiedades registradas."}
+          </Text>
+        )}
       </View>
     </GradientScreen>
   );
@@ -171,16 +267,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
   subtitle: {
     fontSize: 14,
     color: "#D0C6E5",
     marginTop: 6,
     marginBottom: 22,
+  },
+  newButton: {
+    backgroundColor: "#7C4DFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginBottom: 18,
+  },
+  newButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   summaryCard: {
     backgroundColor: "rgba(255,255,255,0.10)",
@@ -215,7 +318,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
   },
-    cover: {
+  cover: {
     width: "100%",
     height: 160,
     borderRadius: 12,
@@ -312,5 +415,40 @@ const styles = StyleSheet.create({
   unavailable: {
     color: "#FCA5A5",
     backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+  },
+  editButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(139,92,246,0.20)",
+  },
+  editText: {
+    color: "#C7B5FF",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  deleteButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(239,68,68,0.15)",
+  },
+  deleteText: {
+    color: "#FCA5A5",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: "#D0C6E5",
+    textAlign: "center",
+    marginTop: 15,
   },
 });

@@ -3,6 +3,13 @@ export interface PropertyImageDto {
   url: string;
 }
 
+export interface PropertyAddressDto {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+}
+
 export interface PropertyResponseDto {
   id: string;
   title: string;
@@ -14,5 +21,6 @@ export interface PropertyResponseDto {
   type: string;
   status: string;
   amenities: string | null;
+  address?: PropertyAddressDto | null;
   images?: PropertyImageDto[];
 }

@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { DeletePropertyUseCase } from "@/modules/property/application/usecases/delete-property.use-case";
 import { GetPropertiesUseCase } from "@/modules/property/application/usecases/get-properties.use-case";
 import { Property } from "@/modules/property/domain/entities/property.entity";
 import { PropertyApiRepository } from "@/modules/property/infrastructure/repositories/property-api.repository";
 
 const getPropertiesUseCase = new GetPropertiesUseCase(
+  new PropertyApiRepository()
+);
+
+const deletePropertyUseCase = new DeletePropertyUseCase(
   new PropertyApiRepository()
 );
 
@@ -32,5 +37,10 @@ export function useProperties() {
     load();
   }, [load]);
 
-  return { properties, loading, error, reload: load };
+  const remove = useCallback(async (id: string) => {
+    await deletePropertyUseCase.execute(id);
+    setProperties((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  return { properties, loading, error, reload: load, remove };
 }
