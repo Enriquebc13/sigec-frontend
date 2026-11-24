@@ -84,6 +84,27 @@ export default function AdminLayout() {
       />
 
       <Drawer.Screen
+        name="reports-users"
+        options={{
+          title: "Administración - Reportes",
+          drawerLabel: "Reportes",
+          drawerIcon: ({ color, size }) => (
+            <AntDesign name="bar-chart" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="reports-properties"
+        options={{ drawerItemStyle: { display: "none" } }}
+      />
+
+      <Drawer.Screen
+        name="reports-requests"
+        options={{ drawerItemStyle: { display: "none" } }}
+      />
+
+      <Drawer.Screen
         name="profile"
         options={{
           title: "Perfil",
