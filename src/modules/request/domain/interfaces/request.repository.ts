@@ -1,5 +1,20 @@
-import { Request } from '../entities/request.entity';
+import { CreateRequestDto } from '../../application/dtos/create-request.dto';
+import { UpdateRequestStatusDto } from '../../application/dtos/update-request-status.dto';
+import { AdminPropertyRequest, PropertyRequest, RequestStatus } from '../entities/request.entity';
+
+/** Filtros opcionales del listado de administrador. */
+export interface RequestFilters {
+  propertyId?: string;
+  status?: RequestStatus;
+}
 
 export interface RequestRepository {
-  getMyRequests(): Promise<Request[]>;
+  /** POST /requests: el userId lo saca la API del token. */
+  create(dto: CreateRequestDto): Promise<PropertyRequest>;
+  /** PATCH /requests/:id/status (solo ADMIN): la API guarda al admin como autor en el historial. */
+  updateStatus(id: string, dto: UpdateRequestStatusDto): Promise<PropertyRequest>;
+  /** GET /requests/my-requests: solicitudes del usuario autenticado. */
+  findMine(): Promise<PropertyRequest[]>;
+  /** GET /requests (solo ADMIN): con solicitante y propiedad. */
+  findAll(filters?: RequestFilters): Promise<AdminPropertyRequest[]>;
 }

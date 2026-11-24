@@ -1,10 +1,14 @@
-import { Request } from '../../domain/entities/request.entity';
+import { PropertyRequest } from '../../domain/entities/request.entity';
 import { RequestRepository } from '../../domain/interfaces/request.repository';
 
 export class GetMyRequestsUseCase {
   constructor(private readonly repository: RequestRepository) {}
 
-  execute(): Promise<Request[]> {
-    return this.repository.getMyRequests();
+  async execute(): Promise<PropertyRequest[]> {
+    const requests = await this.repository.findMine();
+    // Las más recientes primero
+    return [...requests].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
 }

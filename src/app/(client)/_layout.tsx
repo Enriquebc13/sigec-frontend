@@ -44,6 +44,17 @@ export default function ClientLayout() {
       />
 
       <Drawer.Screen
+        name="waitlist"
+        options={{
+          title: 'Lista de espera',
+          drawerLabel: 'Lista de espera',
+          drawerIcon: ({ color, size }) => (
+            <AntDesign name="clock-circle" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
         name="profile"
         options={{
           title: 'Perfil',

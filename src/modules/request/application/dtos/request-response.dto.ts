@@ -1,33 +1,15 @@
-export type RequestStatusDto = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WAITLIST';
+import { RequestStatus } from '../../domain/entities/request.entity';
 
+/** Respuesta de POST /requests y GET /requests/my-requests. */
 export interface RequestResponseDto {
   id: string;
-  telefono?: string;
-  status: RequestStatusDto;
-  createdAt: string | Date;
-  user?:
-    | {
-        id?: string;
-        name?: string;
-        lastname?: string;
-        fullName?: string;
-        email?: string;
-      }
-    | string;
-  property?:
-    | {
-        id?: string;
-        name?: string;
-        title?: string;
-      }
-    | string;
-  nombre?: string;
-  apellidos?: string;
-  correo?: string;
-  propertyId?: string;
-  propertyTitle?: string;
-  propertyName?: string;
-  history?: (string | { action?: string; changedAt?: string })[];
-  action?: string;
-  request?: RequestResponseDto;
+  telefono: string;
+  userId: string;
+  propertyId: string;
+  status: RequestStatus;
+  createdAt: string;
+  /** Número si la solicitud está PENDING; null o ausente si ya fue resuelta. */
+  posicionListaEspera?: number | null;
+  /** true si el propio solicitante canceló la solicitud. */
+  cancelledByApplicant?: boolean;
 }

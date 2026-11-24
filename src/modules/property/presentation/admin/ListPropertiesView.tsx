@@ -1,8 +1,10 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { buildQueues } from "@/modules/request/presentation/admin/waitlist-utils";
+import { useAdminRequests } from "@/modules/request/presentation/admin/hooks/use-admin-requests";
 import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
-import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { Href, router, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
 
@@ -23,6 +25,15 @@ const statusLabels: Record<string, string> = {
 export default function ListPropertiesView() {
 
   const { properties, loading, error, remove, reload } = useProperties();
+
+  // Solicitudes de todas las propiedades: cuántas esperan en cada una y quién la rentó
+  const {
+    requests,
+    loading: requestsLoading,
+    error: requestsError,
+  } = useAdminRequests();
+  const queues = useMemo(() => buildQueues(requests), [requests]);
+  const showCount = !requestsLoading && !requestsError;
 
   const [searchText, setSearchText] = useState("");
   //Para filtrar propiedades
@@ -215,6 +226,30 @@ export default function ListPropertiesView() {
                 {statusLabels[property.status]}
               </Text>
             </View>
+
+            {property.status === "RENTED" && queues.get(property.id)?.approved && (
+              <Text style={styles.renterText}>
+                🏠 Rentada por {queues.get(property.id)!.approved!.applicant.name}{" "}
+                {queues.get(property.id)!.approved!.applicant.lastname}
+              </Text>
+            )}
+
+            <Pressable
+              style={styles.waitlistButton}
+              onPress={() =>
+                router.navigate({
+                  pathname: "/(admin)/waitlist",
+                  params: { property: property.id },
+                } as unknown as Href)
+              }
+            >
+              <Text style={styles.waitlistText}>
+                Lista de espera
+                {showCount
+                  ? ` · ${queues.get(property.id)?.pending.length ?? 0} en espera`
+                  : ""}
+              </Text>
+            </Pressable>
 
             <View style={styles.actions}>
               <Pressable
@@ -416,10 +451,28 @@ const styles = StyleSheet.create({
     color: "#FCA5A5",
     backgroundColor: "rgba(239,68,68,0.15)",
   },
+  renterText: {
+    fontSize: 12,
+    color: "#C7B5FF",
+    fontWeight: "600",
+    marginTop: 12,
+  },
+  waitlistButton: {
+    marginTop: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "rgba(94,53,177,0.35)",
+  },
+  waitlistText: {
+    color: "#C7B5FF",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
   actions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 14,
+    marginTop: 10,
   },
   editButton: {
     flex: 1,

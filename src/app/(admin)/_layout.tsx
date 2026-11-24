@@ -72,6 +72,17 @@ export default function AdminLayout() {
         }}
       />
 
+<Drawer.Screen
+        name="waitlist"
+        options={{
+          title: "Listas de espera",
+          drawerLabel: "Listas de espera",
+          drawerIcon: ({ color, size }) => (
+            <AntDesign name="clock-circle" size={size} color={typeof color === "string" ? color : "#A99CBD"} />
+          ),
+        }}
+      />
+
       <Drawer.Screen
         name="profile"
         options={{

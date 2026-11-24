@@ -1,36 +1,46 @@
-import { GetMyRequestsUseCase } from "@/modules/request/application/usecases/get-my-requests.use-case";
-import { Request } from "@/modules/request/domain/entities/request.entity";
-import { RequestApiRepository } from "@/modules/request/infrastructure/repositories/request-api.repository";
-import { useCallback, useEffect, useState } from "react";
+import { GetMyRequestsUseCase } from '@/modules/request/application/usecases/get-my-requests.use-case';
+import { PropertyRequest } from '@/modules/request/domain/entities/request.entity';
+import { RequestApiRepository } from '@/modules/request/infrastructure/repositories/request-api.repository';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 
-const repository = new RequestApiRepository();
-const getMyRequestsUseCase = new GetMyRequestsUseCase(repository);
+const getMyRequestsUseCase = new GetMyRequestsUseCase(new RequestApiRepository());
 
+/**
+ * Solicitudes del cliente. Se vuelven a pedir cada vez que la pantalla gana
+ * foco, así una solicitud creada desde el catálogo aparece al instante en
+ * "Solicitudes" aunque el drawer mantenga la pantalla montada.
+ */
 export function useMyRequests() {
-  const [requests, setRequests] = useState<Request[]>([]);
+  const [requests, setRequests] = useState<PropertyRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequests = useCallback(async () => {
+  /** Recarga sin mostrar indicadores (la lista actual se queda visible). */
+  const reload = useCallback(async () => {
     try {
       setError(null);
-      const data = await getMyRequestsUseCase.execute();
-      setRequests(data);
-    } catch (e: any) {
-      setError(e?.message ?? "No se pudieron cargar tus solicitudes.");
+      setRequests(await getMyRequestsUseCase.execute());
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : 'No se pudieron cargar tus solicitudes.',
+      );
     }
   }, []);
 
-  useEffect(() => {
-    fetchRequests().finally(() => setLoading(false));
-  }, [fetchRequests]);
+  useFocusEffect(
+    useCallback(() => {
+      reload().finally(() => setLoading(false));
+    }, [reload]),
+  );
 
+  /** Pull-to-refresh / botón "Actualizar". */
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchRequests();
+    await reload();
     setRefreshing(false);
-  }, [fetchRequests]);
+  }, [reload]);
 
-  return { requests, loading, refreshing, error, refresh };
+  return { requests, loading, refreshing, error, refresh, reload };
 }

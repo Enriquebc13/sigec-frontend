@@ -1,10 +1,9 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { RequestStatus } from "@/modules/request/domain/entities/request.entity";
+import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -12,37 +11,50 @@ import {
   View,
 } from "react-native";
 import RequestCard from "../components/RequestCard";
+import { RequestFilterChips } from "../components/RequestFilterChips";
+import {
+  matchesRequestFilter,
+  normalizeText,
+  RequestFilter,
+} from "../request-filters";
 import { useMyRequests } from "./hooks/use-my-requests";
 
-type StatusFilter = "ALL" | RequestStatus;
-
-const filterOptions: { label: string; value: StatusFilter }[] = [
-  { label: "Todas", value: "ALL" },
-  { label: "Pendientes", value: "PENDING" },
-  { label: "Aprobadas", value: "APPROVED" },
-  { label: "Rechazadas", value: "REJECTED" },
-];
-
 export default function MyRequestsView() {
-  const { requests, loading, refreshing, error, refresh } = useMyRequests();
+  const {
+    requests,
+    loading: requestsLoading,
+    refreshing,
+    error,
+    refresh,
+  } = useMyRequests();
+  // /my-requests solo trae propertyId: el nombre sale del catálogo de propiedades
+  const { properties, loading: propertiesLoading } = useProperties();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState<StatusFilter>("ALL");
+  const [selectedFilter, setSelectedFilter] = useState<RequestFilter>("ALL");
+
+  const loading = requestsLoading || propertiesLoading;
+
+  const titleById = useMemo(
+    () => new Map(properties.map((p) => [p.id, p.title])),
+    [properties],
+  );
+  const titleOf = (propertyId: string) =>
+    titleById.get(propertyId) ?? "Propiedad no disponible";
 
   const filteredRequests = useMemo(() => {
+    const query = normalizeText(searchQuery.trim());
     return requests.filter((req) => {
-      const matchesFilter =
-        selectedFilter === "ALL" || req.status === selectedFilter;
-
-      const query = searchQuery.trim().toLowerCase();
-      const matchesSearch =
-        query === "" ||
-        req.propertyName.toLowerCase().includes(query) ||
-        req.id.toLowerCase().includes(query) ||
-        req.telefono.toLowerCase().includes(query);
-
-      return matchesFilter && matchesSearch;
+      if (!matchesRequestFilter(req, selectedFilter)) return false;
+      if (!query) return true;
+      const searchable = [
+        titleById.get(req.propertyId) ?? "",
+        req.id,
+        req.telefono,
+      ].join(" ");
+      return normalizeText(searchable).includes(query);
     });
-  }, [requests, searchQuery, selectedFilter]);
+  }, [requests, titleById, searchQuery, selectedFilter]);
 
   return (
     <GradientScreen
@@ -60,7 +72,6 @@ export default function MyRequestsView() {
           Consulta el estado y seguimiento de tus solicitudes
         </Text>
 
-        {/* Resumen de solicitudes */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryNumber}>
             {loading ? "..." : requests.length}
@@ -72,40 +83,14 @@ export default function MyRequestsView() {
           </Text>
         </View>
 
-        {/* Campo de búsqueda */}
         <SearchInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Buscar por propiedad o teléfono..."
         />
 
-        {/* Filtros por estado */}
-        <View style={styles.filtersContainer}>
-          {filterOptions.map((opt) => {
-            const isSelected = selectedFilter === opt.value;
-            return (
-              <Pressable
-                key={opt.value}
-                onPress={() => setSelectedFilter(opt.value)}
-                style={[
-                  styles.filterChip,
-                  isSelected && styles.filterChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    isSelected && styles.filterChipTextActive,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <RequestFilterChips value={selectedFilter} onChange={setSelectedFilter} />
 
-        {/* Encabezado de la lista */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Tus solicitudes</Text>
           <TouchableOpacity
@@ -117,7 +102,6 @@ export default function MyRequestsView() {
           </TouchableOpacity>
         </View>
 
-        {/* Estado de carga */}
         {loading && (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color="#C7B5FF" />
@@ -125,7 +109,6 @@ export default function MyRequestsView() {
           </View>
         )}
 
-        {/* Estado de error */}
         {error && !loading && (
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>{error}</Text>
@@ -135,19 +118,18 @@ export default function MyRequestsView() {
           </View>
         )}
 
-        {/* Sin solicitudes registradas */}
         {!loading && !error && requests.length === 0 && (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyTitle}>Sin solicitudes activas</Text>
             <Text style={styles.emptySubtitle}>
               Aún no has solicitado ningún espacio comercial. Explora las
-              propiedades disponibles y solicita la que más te interese.
+              propiedades disponibles y toca «Me interesa» en la que más te
+              guste.
             </Text>
           </View>
         )}
 
-        {/* Sin resultados tras filtrar */}
         {!loading &&
           !error &&
           requests.length > 0 &&
@@ -162,14 +144,13 @@ export default function MyRequestsView() {
             </View>
           )}
 
-        {/* Lista de solicitudes */}
         {!loading &&
           !error &&
           filteredRequests.map((request) => (
             <RequestCard
               key={request.id}
               request={request}
-              showClient={false}
+              propertyTitle={titleOf(request.propertyId)}
             />
           ))}
       </View>
@@ -178,9 +159,7 @@ export default function MyRequestsView() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   subtitle: {
     fontSize: 14,
     color: "#D0C6E5",
@@ -196,75 +175,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
   },
-  summaryNumber: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  summaryText: {
-    fontSize: 14,
-    color: "#D0C6E5",
-    marginTop: 4,
-  },
-  filtersContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 20,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-  filterChipActive: {
-    backgroundColor: "#5E35B1",
-    borderColor: "#7C4DFF",
-  },
-  filterChipText: {
-    fontSize: 13,
-    color: "#D0C6E5",
-    fontWeight: "500",
-  },
-  filterChipTextActive: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
+  summaryNumber: { fontSize: 32, fontWeight: "bold", color: "#FFFFFF" },
+  summaryText: { fontSize: 14, color: "#D0C6E5", marginTop: 4 },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 14,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#FFFFFF" },
   refreshButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     backgroundColor: "rgba(94,53,177,0.35)",
   },
-  refreshText: {
-    color: "#C7B5FF",
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  refreshText: { color: "#C7B5FF", fontSize: 13, fontWeight: "600" },
   centerContainer: {
     paddingVertical: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  loadingText: {
-    color: "#D0C6E5",
-    fontSize: 14,
-    marginTop: 12,
-  },
+  loadingText: { color: "#D0C6E5", fontSize: 14, marginTop: 12 },
   errorCard: {
     backgroundColor: "rgba(239, 68, 68, 0.15)",
     borderWidth: 1,
@@ -286,21 +218,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
   },
-  retryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 13,
-  },
+  retryButtonText: { color: "#FFFFFF", fontWeight: "bold", fontSize: 13 },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 45,
     paddingHorizontal: 20,
   },
-  emptyIcon: {
-    fontSize: 44,
-    marginBottom: 12,
-  },
+  emptyIcon: { fontSize: 44, marginBottom: 12 },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "bold",
