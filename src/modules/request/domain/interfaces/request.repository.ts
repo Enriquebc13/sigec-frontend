@@ -17,4 +17,10 @@ export interface RequestRepository {
   findMine(): Promise<PropertyRequest[]>;
   /** GET /requests (solo ADMIN): con solicitante y propiedad. */
   findAll(filters?: RequestFilters): Promise<AdminPropertyRequest[]>;
+  /** PATCH /requests/:id/cancel: el solicitante cancela su solicitud PENDING (sale de la lista de espera). */
+  cancel(id: string): Promise<PropertyRequest>;
+  /** PATCH /requests/:id/phone: el solicitante corrige su teléfono (PENDING o APPROVED). */
+  updatePhone(id: string, telefono: string): Promise<PropertyRequest>;
+  /** DELETE /requests/:id: elimina una solicitud propia. */
+  delete(id: string): Promise<void>;
 }

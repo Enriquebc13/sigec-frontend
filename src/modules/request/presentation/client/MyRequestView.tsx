@@ -1,7 +1,8 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
-import { useMemo, useState } from "react";
+import { PropertyRequest } from "@/modules/request/domain/entities/request.entity";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -17,6 +18,11 @@ import {
   normalizeText,
   RequestFilter,
 } from "../request-filters";
+import { ClientRequestActions } from "./components/ClientRequestActions";
+import { ConfirmRequestModal } from "./components/ConfirmRequestModal";
+import { EditPhoneModal } from "./components/EditPhoneModal";
+import { useCancelRequest } from "./hooks/use-cancel-request";
+import { useDeleteRequest } from "./hooks/use-delete-request";
 import { useMyRequests } from "./hooks/use-my-requests";
 
 export default function MyRequestsView() {
@@ -26,6 +32,7 @@ export default function MyRequestsView() {
     refreshing,
     error,
     refresh,
+    reload,
   } = useMyRequests();
   // /my-requests solo trae propertyId: el nombre sale del catálogo de propiedades
   const { properties, loading: propertiesLoading } = useProperties();
@@ -34,6 +41,53 @@ export default function MyRequestsView() {
   const [selectedFilter, setSelectedFilter] = useState<RequestFilter>("ALL");
 
   const loading = requestsLoading || propertiesLoading;
+
+  const { cancel, loading: cancelling, error: cancelError, reset: resetCancel } =
+    useCancelRequest();
+  const { remove, loading: deleting, error: deleteError, reset: resetDelete } =
+    useDeleteRequest();
+
+  const [toCancel, setToCancel] = useState<PropertyRequest | null>(null);
+  const [toDelete, setToDelete] = useState<PropertyRequest | null>(null);
+  const [toEditPhone, setToEditPhone] = useState<PropertyRequest | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 3000);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  const askCancel = (r: PropertyRequest) => {
+    resetCancel();
+    setToCancel(r);
+  };
+  const askDelete = (r: PropertyRequest) => {
+    resetDelete();
+    setToDelete(r);
+  };
+
+  const confirmCancel = async () => {
+    if (!toCancel) return;
+    if (await cancel(toCancel.id, toCancel.status)) {
+      setToCancel(null);
+      setNotice("Solicitud cancelada. Saliste de la lista de espera");
+      reload();
+    }
+  };
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    if (await remove(toDelete.id, toDelete.status)) {
+      setToDelete(null);
+      setNotice("Solicitud eliminada correctamente");
+      reload();
+    }
+  };
+
+  // Aprobada y la propiedad ya está rentada: el contrato es de este cliente
+  const isRentedByMe = (r: PropertyRequest) =>
+    r.status === "APPROVED" &&
+    properties.find((p) => p.id === r.propertyId)?.status === "RENTED";
 
   const titleById = useMemo(
     () => new Map(properties.map((p) => [p.id, p.title])),
@@ -82,6 +136,8 @@ export default function MyRequestsView() {
               : "Solicitudes registradas"}
           </Text>
         </View>
+
+        {notice && <Text style={styles.notice}>{notice}</Text>}
 
         <SearchInput
           value={searchQuery}
@@ -151,9 +207,67 @@ export default function MyRequestsView() {
               key={request.id}
               request={request}
               propertyTitle={titleOf(request.propertyId)}
-            />
+            >
+              <ClientRequestActions
+                request={request}
+                rentedByMe={isRentedByMe(request)}
+                onEditPhone={setToEditPhone}
+                onCancel={askCancel}
+                onDelete={askDelete}
+              />
+            </RequestCard>
           ))}
       </View>
+
+      {toEditPhone && (
+        <EditPhoneModal
+          key={toEditPhone.id}
+          request={toEditPhone}
+          propertyTitle={titleOf(toEditPhone.propertyId)}
+          onClose={() => setToEditPhone(null)}
+          onSaved={() => {
+            setToEditPhone(null);
+            setNotice("Teléfono actualizado correctamente");
+            reload();
+          }}
+        />
+      )}
+
+      {toCancel && (
+        <ConfirmRequestModal
+          title="Cancelar solicitud"
+          message={`¿Seguro que quieres cancelar tu solicitud para «${titleOf(toCancel.propertyId)}»?${
+            toCancel.posicionListaEspera != null
+              ? ` Saldrás de la lista de espera (lugar #${toCancel.posicionListaEspera}).`
+              : ""
+          }`}
+          confirmLabel="Sí, cancelar solicitud"
+          cancelLabel="Volver"
+          loading={cancelling}
+          error={cancelError}
+          onConfirm={confirmCancel}
+          onCancel={() => {
+            resetCancel();
+            setToCancel(null);
+          }}
+        />
+      )}
+
+      {toDelete && (
+        <ConfirmRequestModal
+          title="Eliminar solicitud rechazada"
+          message={`Tu solicitud para «${titleOf(toDelete.propertyId)}» fue rechazada. ¿Quieres quitarla de tu lista? Esta acción no se puede deshacer.`}
+          confirmLabel="Sí, eliminar"
+          cancelLabel="Cancelar"
+          loading={deleting}
+          error={deleteError}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            resetDelete();
+            setToDelete(null);
+          }}
+        />
+      )}
     </GradientScreen>
   );
 }
@@ -174,6 +288,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
+  },
+  notice: {
+    color: "#86EFAC",
+    backgroundColor: "rgba(34,197,94,0.15)",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 13,
+    marginBottom: 14,
+    overflow: "hidden",
   },
   summaryNumber: { fontSize: 32, fontWeight: "bold", color: "#FFFFFF" },
   summaryText: { fontSize: 14, color: "#D0C6E5", marginTop: 4 },

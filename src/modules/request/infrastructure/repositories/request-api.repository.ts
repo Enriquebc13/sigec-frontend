@@ -70,4 +70,25 @@ export class RequestApiRepository implements RequestRepository {
     );
     return (data ?? []).map(toAdminRequest);
   }
+
+  async cancel(id: string): Promise<PropertyRequest> {
+    // La API comprueba que sea del usuario del token y que siga PENDING
+    const data = await apiClient<RequestResponseDto>(`/requests/${id}/cancel`, {
+      method: 'PATCH',
+    });
+    return toPropertyRequest(data);
+  }
+
+  async updatePhone(id: string, telefono: string): Promise<PropertyRequest> {
+    const data = await apiClient<RequestResponseDto>(`/requests/${id}/phone`, {
+      method: 'PATCH',
+      body: JSON.stringify({ telefono }),
+    });
+    return toPropertyRequest(data);
+  }
+
+  async delete(id: string): Promise<void> {
+    // La API comprueba que la solicitud sea del usuario del token
+    await apiClient<unknown>(`/requests/${id}`, { method: 'DELETE' });
+  }
 }
