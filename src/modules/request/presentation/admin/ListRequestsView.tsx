@@ -193,6 +193,7 @@ export default function ListRequestsView() {
           applicant={`${editing.applicant.name} ${editing.applicant.lastname}`.trim()}
           telefono={editing.telefono}
           propertyTitle={editing.property.title}
+          position={editing.posicionListaEspera}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />

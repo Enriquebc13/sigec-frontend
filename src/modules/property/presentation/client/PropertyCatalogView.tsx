@@ -2,6 +2,7 @@ import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { normalizeText } from "@/modules/request/presentation/request-filters";
 import { useMyRequests } from "@/modules/request/presentation/client/hooks/use-my-requests";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -46,6 +47,13 @@ export default function PropertyCatalogView() {
   const [selected, setSelected] = useState<Property | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // ?property=<id>: llegó desde "Ver propiedad"; muestra solo esa propiedad
+  // (con opción de volver al catálogo completo).
+  const { property: propertyParam } = useLocalSearchParams<{
+    property?: string | string[];
+  }>();
+  const focusId = Array.isArray(propertyParam) ? propertyParam[0] : propertyParam;
+
   const requestByProperty = useMemo(
     () => latestRequestByProperty(requests),
     [requests],
@@ -54,6 +62,7 @@ export default function PropertyCatalogView() {
   const filtered = useMemo(() => {
     const query = normalizeText(search.trim());
     return properties.filter((p) => {
+      if (focusId && p.id !== focusId) return false;
       if (typeFilter !== "ALL" && p.type !== typeFilter) return false;
       if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
       if (!query) return true;
@@ -62,7 +71,7 @@ export default function PropertyCatalogView() {
         .join(" ");
       return normalizeText(searchable).includes(query);
     });
-  }, [properties, search, typeFilter, statusFilter]);
+  }, [properties, search, typeFilter, statusFilter, focusId]);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -88,6 +97,15 @@ export default function PropertyCatalogView() {
         <Text style={styles.subtitle}>
           Explora los espacios comerciales y solicita el que te interese
         </Text>
+
+        {focusId && (
+          <View style={styles.focusBanner}>
+            <Text style={styles.focusText}>Mostrando una propiedad</Text>
+            <Pressable onPress={() => router.setParams({ property: undefined })}>
+              <Text style={styles.focusLink}>Ver todas ›</Text>
+            </Pressable>
+          </View>
+        )}
 
         <SearchInput
           value={search}
@@ -218,6 +236,17 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 20,
   },
+  focusBanner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "rgba(139,92,246,0.20)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  focusText: { color: "#E4DAFF", fontSize: 13, fontWeight: "600" },
+  focusLink: { color: "#C7B5FF", fontSize: 13, fontWeight: "bold" },
   filterBlock: { marginBottom: 14 },
   filterTitle: { fontSize: 12, color: "#AFA3C8", marginBottom: 8 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

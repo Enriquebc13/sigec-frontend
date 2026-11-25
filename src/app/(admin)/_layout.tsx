@@ -62,6 +62,14 @@ export default function AdminLayout() {
       />
 
       <Drawer.Screen
+        name="propertyRequests"
+        options={{
+          title: "Solicitudes recibidas",
+          drawerItemStyle: { display: "none" },
+        }}
+      />
+
+      <Drawer.Screen
         name="requests"
         options={{
           title: "Solicitudes",

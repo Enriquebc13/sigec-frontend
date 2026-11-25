@@ -1,4 +1,5 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { goToClientProperty } from "@/modules/property/presentation/property-navigation";
 import { useReloadOnFocus } from "@/hooks/use-reload-on-focus";
 import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
 import { Href, router } from "expo-router";
@@ -162,7 +163,7 @@ export default function ClientWaitlistView() {
                   )}
                   <Pressable
                     style={styles.link}
-                    onPress={() => router.navigate("/(client)/properties" as Href)}
+                    onPress={() => goToClientProperty(request.propertyId)}
                   >
                     <Text style={styles.linkText}>Ver propiedad ›</Text>
                   </Pressable>

@@ -2,6 +2,10 @@ import { GradientScreen } from "@/components/ui/GradientScreen";
 import { useReloadOnFocus } from "@/hooks/use-reload-on-focus";
 import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
 import {
+  goToAdminProperty,
+  goToPropertyRequests,
+} from "@/modules/property/presentation/property-navigation";
+import {
   AdminPropertyRequest,
   DecisionStatus,
 } from "@/modules/request/domain/entities/request.entity";
@@ -194,6 +198,15 @@ export default function AdminWaitlistView() {
               {queue.cancelledCount === 1 ? "cancelada" : "canceladas"}
             </Text>
 
+            <View style={styles.links}>
+              <Pressable style={styles.linkBtn} onPress={() => goToAdminProperty(selected.id)}>
+                <Text style={styles.linkBtnText}>Ver propiedad</Text>
+              </Pressable>
+              <Pressable style={styles.linkBtn} onPress={() => goToPropertyRequests(selected.id)}>
+                <Text style={styles.linkBtnText}>Solicitudes recibidas</Text>
+              </Pressable>
+            </View>
+
             {queue.approved && (
               <>
                 <Text style={styles.section}>Trato en curso</Text>
@@ -239,6 +252,7 @@ export default function AdminWaitlistView() {
           applicant={`${editing.applicant.name} ${editing.applicant.lastname}`.trim()}
           telefono={editing.telefono}
           propertyTitle={editing.property.title}
+          position={editing.posicionListaEspera}
           onClose={() => setEditing(null)}
           onSaved={handleSaved}
         />
@@ -330,4 +344,14 @@ const styles = StyleSheet.create({
   summary: { fontSize: 12, color: "#AFA3C8", marginTop: 8, marginBottom: 6, lineHeight: 17 },
   section: { fontSize: 16, fontWeight: "bold", color: "#FFFFFF", marginTop: 16, marginBottom: 12 },
   hint: { fontSize: 12, color: "#AFA3C8", lineHeight: 17, marginBottom: 6 },
+  links: { flexDirection: "row", gap: 8, marginTop: 4 },
+  linkBtn: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    backgroundColor: "rgba(139,92,246,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  linkBtnText: { color: "#C7B5FF", fontWeight: "bold", fontSize: 13 },
 });

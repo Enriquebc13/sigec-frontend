@@ -1,13 +1,14 @@
+import { goToAdminProperty } from "@/modules/property/presentation/property-navigation";
+import { RequestHistory } from "@/modules/request/domain/entities/request-history.entity";
 import {
   AdminPropertyRequest,
   allowedDecisions,
 } from "@/modules/request/domain/entities/request.entity";
-import { RequestHistory } from "@/modules/request/domain/entities/request-history.entity";
-import { Href, router } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import RequestCard from "../../components/RequestCard";
 import { actionLabel } from "../../request-labels";
+import { buildContactMessage, isWhatsAppReachable, openWhatsApp } from "../whatsapp";
 
 const formatDateTime = (date: Date) =>
   isNaN(date.getTime())
@@ -39,6 +40,7 @@ export function AdminRequestCard({ request, history, onManage, highlight }: Prop
   const rented =
     request.status === "APPROVED" && request.property.status === "RENTED";
   const canManage = allowedDecisions(request.status).length > 0;
+  const applicantName = `${request.applicant.name} ${request.applicant.lastname}`.trim();
 
   return (
     <View style={highlight ? styles.highlight : undefined}>
@@ -83,17 +85,37 @@ export function AdminRequestCard({ request, history, onManage, highlight }: Prop
           </>
         )}
 
+        {isWhatsAppReachable(request.telefono) && (
+          <Pressable
+            style={styles.whatsapp}
+            accessibilityLabel={`Escribir por WhatsApp a ${applicantName}`}
+            onPress={() =>
+              openWhatsApp(
+                request.telefono,
+                buildContactMessage({
+                  applicant: request.applicant.name,
+                  propertyTitle: request.property.title,
+                  status: request.status,
+                  position: request.posicionListaEspera,
+                }),
+              )
+            }
+          >
+            <Text style={styles.whatsappText}>Escribir por WhatsApp</Text>
+          </Pressable>
+        )}
+
         {rented ? (
           <>
             <Pressable
               style={styles.button}
-              onPress={() => router.navigate("/(admin)/properties" as Href)}
+              onPress={() => goToAdminProperty(request.propertyId)}
             >
-              <Text style={styles.buttonText}>Ir a Propiedades</Text>
+              <Text style={styles.buttonText}>Ver propiedad</Text>
             </Pressable>
             <Text style={styles.hint}>
-              Para terminar el contrato, pon la propiedad en «Disponible» desde
-              Propiedades.
+              Para terminar el contrato, abre la propiedad y cámbiala a
+              «Disponible».
             </Text>
           </>
         ) : canManage ? (
@@ -135,5 +157,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: { color: "#C7B5FF", fontWeight: "bold", fontSize: 14 },
+  whatsapp: {
+    marginTop: 14,
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: "rgba(34,197,94,0.19)",
+    borderWidth: 1,
+    borderColor: "rgba(134,239,172,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  whatsappText: { color: "#86EFAC", fontWeight: "bold", fontSize: 14 },
   hint: { fontSize: 12, color: "#AFA3C8", marginTop: 12, lineHeight: 17 },
 });

@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { REQUEST_STATUS_LABELS } from "../../request-labels";
 import { useUpdateRequestStatus } from "../hooks/use-update-request-status";
+import { buildContactMessage, isWhatsAppReachable, openWhatsApp } from "../whatsapp";
 
 type Props = {
   requestId: string;
@@ -24,6 +25,8 @@ type Props = {
   applicant: string;
   telefono: string;
   propertyTitle: string;
+  /** Turno en la lista de espera, para el mensaje de WhatsApp (solo PENDING). */
+  position?: number | null;
   onClose: () => void;
   onSaved: (status: DecisionStatus) => void;
 };
@@ -50,6 +53,7 @@ export function EditRequestStatusModal({
   applicant,
   telefono,
   propertyTitle,
+  position,
   onClose,
   onSaved,
 }: Props) {
@@ -90,6 +94,31 @@ export function EditRequestStatusModal({
                   value={REQUEST_STATUS_LABELS[currentStatus]}
                 />
               </View>
+
+              {isWhatsAppReachable(telefono) && (
+                <>
+                  <Pressable
+                    style={styles.whatsapp}
+                    onPress={() =>
+                      openWhatsApp(
+                        telefono,
+                        buildContactMessage({
+                          applicant,
+                          propertyTitle,
+                          // El mensaje sigue a la decisión elegida (aprobar/rechazar)
+                          status: selected ?? currentStatus,
+                          position: selected ? null : position,
+                        }),
+                      )
+                    }
+                  >
+                    <Text style={styles.whatsappText}>💬 Enviar mensaje por WhatsApp</Text>
+                  </Pressable>
+                  <Text style={styles.whatsappHint}>
+                    Se abre WhatsApp con un mensaje listo; puedes editarlo antes de enviarlo.
+                  </Text>
+                </>
+              )}
 
               {currentStatus === "APPROVED" && (
                 <Text style={styles.hint}>
@@ -210,6 +239,18 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 12, color: "#AFA3C8" },
   rowValue: { fontSize: 13, color: "#FFFFFF", flexShrink: 1, textAlign: "right" },
   hint: { fontSize: 12, color: "#D0C6E5", marginTop: 12, lineHeight: 17 },
+  whatsapp: {
+    marginTop: 14,
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: "rgba(34,197,94,0.19)",
+    borderWidth: 1,
+    borderColor: "rgba(134,239,172,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  whatsappText: { color: "#86EFAC", fontWeight: "bold", fontSize: 14 },
+  whatsappHint: { fontSize: 11, color: "#AFA3C8", marginTop: 6, lineHeight: 15 },
   legend: { fontSize: 13, color: "#D0C6E5", marginTop: 18, marginBottom: 8 },
   option: {
     flexDirection: "row",

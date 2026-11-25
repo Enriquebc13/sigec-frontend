@@ -1,9 +1,10 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { goToPropertyRequests, goToPropertyWaitlist } from "@/modules/property/presentation/property-navigation";
 import { buildQueues } from "@/modules/request/presentation/admin/waitlist-utils";
 import { useAdminRequests } from "@/modules/request/presentation/admin/hooks/use-admin-requests";
 import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
-import { Href, router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useProperties } from "./hooks/use-properties";
@@ -236,12 +237,7 @@ export default function ListPropertiesView() {
 
             <Pressable
               style={styles.waitlistButton}
-              onPress={() =>
-                router.navigate({
-                  pathname: "/(admin)/waitlist",
-                  params: { property: property.id },
-                } as unknown as Href)
-              }
+              onPress={() => goToPropertyWaitlist(property.id)}
             >
               <Text style={styles.waitlistText}>
                 Lista de espera
@@ -249,6 +245,13 @@ export default function ListPropertiesView() {
                   ? ` · ${queues.get(property.id)?.pending.length ?? 0} en espera`
                   : ""}
               </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.waitlistButton}
+              onPress={() => goToPropertyRequests(property.id)}
+            >
+              <Text style={styles.waitlistText}>Solicitudes recibidas</Text>
             </Pressable>
 
             <View style={styles.actions}>
