@@ -1,9 +1,11 @@
 import { ApiError } from "@/core/http/api-client";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { checkWelcomeSeen } from "@/modules/home/presentation/welcome-services";
 import { Href, router } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useApiAuth } from "../context/ApiAuthProvider";
+import { getHomeRoute } from "../utils/get-home-route";
 
 export function LoginForm() {
     const [email, setEmail] = useState("");
@@ -15,9 +17,13 @@ export function LoginForm() {
     const handleLogin = async () => {
         setSubmitting(true);
         try {
-            await login(email, password);
-            // Bienvenida animada; desde ahí cada rol continúa a su propio home
-            router.replace("/welcome" as Href);
+            const session = await login(email, password);
+            // La bienvenida animada solo la ve cada usuario la primera vez;
+            // después va directo a su home
+            const seenWelcome = await checkWelcomeSeen.execute(session.userId);
+            router.replace(
+                seenWelcome ? getHomeRoute(session.role) : ("/welcome" as Href)
+            );
         } catch (error) {
             console.log("Error en login:", error);
             const message =

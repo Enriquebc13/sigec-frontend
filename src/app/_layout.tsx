@@ -19,6 +19,11 @@ export default function Layout() {
                     name="index"
                     options={{ headerShown: false }}
                 />
+                {/* Intro de SIGEC: antes del login la primera vez, o repetido desde "Conoce Sigec" */}
+                <Stack.Screen
+                    name="onboarding"
+                    options={{ headerShown: false, animation: "fade", gestureEnabled: false }}
+                />
                 <Stack.Screen
                     name="login"
                     options={{ headerShown: false }}

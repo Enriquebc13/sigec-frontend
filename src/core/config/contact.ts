@@ -4,7 +4,7 @@
  * reemplázalos por los reales en los dos proyectos.
  */
 export const SIGEC_CONTACT = {
-  email: 'contacto@sigec.example',
+  email: 'contactaSigec@gmail.com',
   phone: '55 1234 5678',
   /** Para el enlace tel: (solo dígitos). */
   phoneHref: '5512345678',

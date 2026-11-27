@@ -3,15 +3,25 @@ import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { goToPropertyRequests, goToPropertyWaitlist } from "@/modules/property/presentation/property-navigation";
-import { buildQueues } from "@/modules/request/presentation/admin/waitlist-utils";
+import { AutoRejectedNotice } from "@/modules/request/presentation/admin/components/AutoRejectedNotice";
 import { useAdminRequests } from "@/modules/request/presentation/admin/hooks/use-admin-requests";
+import { buildQueues } from "@/modules/request/presentation/admin/waitlist-utils";
 import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import { AutoRejectedNotice } from "@/modules/request/presentation/admin/components/AutoRejectedNotice";
+import { Property } from "../../domain/entities/property.entity";
 import { clearAutoRejected, useAutoRejected } from "./auto-rejected-store";
+import { PropertyFilterChips } from "./components/PropertyFilterChips";
 import { useProperties } from "./hooks/use-properties";
+import {
+  matchesStatusFilter,
+  matchesTypeFilter,
+  PropertyStatusFilter,
+  PropertyTypeFilter,
+  STATUS_FILTER_OPTIONS,
+  TYPE_FILTER_OPTIONS,
+} from "./property-filters";
 
 
 const typeLabels: Record<string, string> = {
@@ -44,6 +54,8 @@ export default function ListPropertiesView() {
   const autoRejected = useAutoRejected();
 
   const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<PropertyStatusFilter>("ALL");
+  const [typeFilter, setTypeFilter] = useState<PropertyTypeFilter>("ALL");
   //Para filtrar propiedades
   // Quita acentos y mayúsculas
   const normalize = (text: string) =>
@@ -53,8 +65,9 @@ export default function ListPropertiesView() {
       .toLowerCase();
 
 
-  const filteredProperties = properties.filter((property) => {
-    const query = normalize(searchText.trim());
+  const query = normalize(searchText.trim());
+
+  const matchesSearch = (property: Property) => {
     if (!query) return true;
 
     const searchable = [
@@ -66,7 +79,44 @@ export default function ListPropertiesView() {
       .join(" ");
 
     return normalize(searchable).includes(query);
-  });
+  };
+
+  const filteredProperties = properties.filter(
+    (property) =>
+      matchesSearch(property) &&
+      matchesStatusFilter(property, statusFilter) &&
+      matchesTypeFilter(property, typeFilter)
+  );
+
+  // Cada chip muestra cuántas propiedades quedarían al elegirlo, respetando
+  // la búsqueda y el otro filtro (así el número coincide con lo que se verá)
+  const statusOptions = STATUS_FILTER_OPTIONS.map((opt) => ({
+    ...opt,
+    count: properties.filter(
+      (p) =>
+        matchesSearch(p) &&
+        matchesTypeFilter(p, typeFilter) &&
+        matchesStatusFilter(p, opt.value)
+    ).length,
+  }));
+  const typeOptions = TYPE_FILTER_OPTIONS.map((opt) => ({
+    ...opt,
+    count: properties.filter(
+      (p) =>
+        matchesSearch(p) &&
+        matchesStatusFilter(p, statusFilter) &&
+        matchesTypeFilter(p, opt.value)
+    ).length,
+  }));
+
+  const hasActiveFilters =
+    statusFilter !== "ALL" || typeFilter !== "ALL" || query !== "";
+
+  const clearFilters = () => {
+    setSearchText("");
+    setStatusFilter("ALL");
+    setTypeFilter("ALL");
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -149,6 +199,25 @@ export default function ListPropertiesView() {
           onChangeText={setSearchText}
           placeholder="Buscar por título, calle o ciudad..."
         />
+
+        <PropertyFilterChips
+          title="Estado"
+          options={statusOptions}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+        <PropertyFilterChips
+          title="Tipo"
+          options={typeOptions}
+          value={typeFilter}
+          onChange={setTypeFilter}
+        />
+
+        {hasActiveFilters && (
+          <Text style={styles.resultsText}>
+            Mostrando {filteredProperties.length} de {properties.length} propiedades
+          </Text>
+        )}
 
         {filteredProperties.map((property, index) => (
 
@@ -286,11 +355,18 @@ export default function ListPropertiesView() {
           </Reveal>
         ))}
         {filteredProperties.length === 0 && (
-          <Text style={styles.emptyMessage}>
-            {searchText.trim()
-              ? "No se encontraron propiedades con esa búsqueda."
-              : "No hay propiedades registradas."}
-          </Text>
+          <>
+            <Text style={styles.emptyMessage}>
+              {hasActiveFilters
+                ? "No se encontraron propiedades con esa búsqueda o filtros."
+                : "No hay propiedades registradas."}
+            </Text>
+            {hasActiveFilters && (
+              <Pressable style={styles.clearButton} onPress={clearFilters}>
+                <Text style={styles.clearText}>Limpiar filtros</Text>
+              </Pressable>
+            )}
+          </>
         )}
       </View>
     </GradientScreen>
@@ -505,6 +581,24 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: "#FCA5A5",
+    fontWeight: "bold",
+    fontSize: 13,
+  },
+  resultsText: {
+    fontSize: 12,
+    color: "#AFA3C8",
+    marginBottom: 14,
+  },
+  clearButton: {
+    alignSelf: "center",
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(139,92,246,0.20)",
+  },
+  clearText: {
+    color: "#C7B5FF",
     fontWeight: "bold",
     fontSize: 13,
   },

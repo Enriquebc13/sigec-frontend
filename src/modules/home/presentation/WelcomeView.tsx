@@ -3,9 +3,12 @@ import { useApiAuth } from '@/modules/auth-api/presentation/context/ApiAuthProvi
 import { getHomeRoute } from '@/modules/auth-api/presentation/utils/get-home-route';
 import { useUserById } from '@/modules/users/presentation/admin/hooks/use-user-by-id';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Href, Redirect, router } from 'expo-router';
-import { ComponentProps } from 'react';
+import { ComponentProps, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import { WelcomeScreen, WelcomeShortcut } from './components/WelcomeScreen';
+import { completeWelcome } from './welcome-services';
 
 const ICON = (name: ComponentProps<typeof AntDesign>['name']) => (
   <AntDesign name={name} size={24} color="#D7C9FF" />
@@ -18,20 +21,41 @@ const timeGreeting = () => {
   return 'Buenas noches';
 };
 
+// Cuánto se espera el nombre del perfil antes de saludar con el correo (red lenta)
+const NAME_WAIT_MS = 4000;
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
- * Bienvenida que se ve justo después de iniciar sesión. Al abrir la app con una
- * sesión ya guardada se va directo al Home (no se repite en cada apertura).
+ * Bienvenida que se ve justo después de iniciar sesión, solo la primera vez de
+ * cada usuario (el LoginForm decide si se muestra). Al abrir la app con una
+ * sesión ya guardada se va directo al Home.
  */
 export default function WelcomeView() {
   const { session } = useApiAuth();
-  const { user } = useUserById(session?.userId);
+  const { user, loading } = useUserById(session?.userId);
+  const userId = session?.userId;
+  const [gaveUp, setGaveUp] = useState(false);
+
+  // Si el perfil tarda demasiado, se saluda con el correo en vez de dejar al usuario esperando
+  useEffect(() => {
+    const timer = setTimeout(() => setGaveUp(true), NAME_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Se marca al mostrarse: si cierran la app en plena bienvenida, no se repite
+  useEffect(() => {
+    if (userId) completeWelcome.execute(userId);
+  }, [userId]);
 
   // Sin sesión no hay a quién saludar
   if (!session) return <Redirect href={'/login' as Href} />;
 
-  // Primer nombre; mientras llega el perfil, la parte local del correo
+  // Se espera al perfil para no mostrar primero el correo y luego cambiarlo por el nombre.
+  // La bienvenida se monta ya con el nombre final, así sus animaciones empiezan completas.
+  if (loading && !gaveUp) return <WelcomeLoading />;
+
+  // Primer nombre; si el perfil no llegó (error o espera agotada), la parte local del correo
   const name = user?.name?.trim().split(' ')[0] || session.email.split('@')[0];
   const goHome = () => router.replace(getHomeRoute(session.role));
 
@@ -41,6 +65,24 @@ export default function WelcomeView() {
     <ClientWelcome name={name} onContinue={goHome} />
   );
 }
+
+/** Mismo fondo que la bienvenida mientras llega el nombre, para que no haya destello. */
+function WelcomeLoading() {
+  return (
+    <LinearGradient
+      colors={['#5E35B1', '#1A0B2E', '#000000']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+      style={styles.loading}
+    >
+      <ActivityIndicator size="large" color="#C7B5FF" />
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+});
 
 type RoleProps = { name: string; onContinue: () => void };
 

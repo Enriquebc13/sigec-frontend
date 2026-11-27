@@ -1,5 +1,9 @@
 import { GradientScreen } from "@/components/ui/GradientScreen";
+import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
+import { resetOnboarding } from "@/modules/onboarding/presentation/onboarding-services";
+import { resetWelcome } from "./welcome-services";
 import { Ionicons } from "@expo/vector-icons";
+import { Href, router } from "expo-router";
 import { useState } from "react";
 import {
     ActivityIndicator,
@@ -138,10 +142,25 @@ function FaqItem({
 export default function ClientInformationView() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [opening, setOpening] = useState(false);
+  const { session } = useApiAuth();
 
   const toggleFaq = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpenIndex((prev) => (prev === index ? null : index));
+  };
+
+  // Repite el intro sin tocar la marca de "ya visto"
+  const replayIntro = () =>
+    router.push({ pathname: "/onboarding", params: { replay: "1" } } as Href);
+
+  // Solo desarrollo: borra las marcas para probar el intro y la bienvenida desde cero
+  const resetIntroForTesting = async () => {
+    await resetOnboarding.execute();
+    if (session) await resetWelcome.execute(session.userId);
+    Alert.alert(
+      "Intro y bienvenida reiniciados",
+      "Cierra sesión y vuelve a iniciar para ver la bienvenida. Para ver el intro, cierra sesión y reinicia la app."
+    );
   };
 
   const openSigecWeb = async () => {
@@ -185,6 +204,14 @@ export default function ClientInformationView() {
           negocio, permitiéndote conocer las opciones disponibles y realizar
           solicitudes de manera sencilla.
         </Text>
+        <Pressable
+          style={({ pressed }) => [styles.buttonOutline, pressed && { opacity: 0.8 }]}
+          onPress={replayIntro}
+          accessibilityRole="button"
+        >
+          <Ionicons name="play-circle-outline" size={20} color="#D1C4E9" />
+          <Text style={styles.buttonOutlineText}>Ver introducción</Text>
+        </Pressable>
       </View>
 
       {/* 3. Tarjeta promocional */}
@@ -223,6 +250,12 @@ export default function ClientInformationView() {
           onPress={() => toggleFaq(i)}
         />
       ))}
+
+      {__DEV__ && (
+        <Pressable onPress={resetIntroForTesting} style={styles.devLink}>
+          <Text style={styles.devLinkText}>Reiniciar intro y bienvenida (solo desarrollo)</Text>
+        </Pressable>
+      )}
     </GradientScreen>
   );
 }
@@ -287,6 +320,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  buttonOutline: {
+    marginTop: 16,
+    borderColor: "rgba(209,196,233,0.5)",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  buttonOutlineText: {
+    color: "#D1C4E9",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  devLink: { alignItems: "center", paddingVertical: 12 },
+  devLinkText: { color: "#8B88A0", fontSize: 12, textDecorationLine: "underline" },
   sectionTitle: {
     color: "#fff",
     fontSize: 20,
