@@ -1,12 +1,18 @@
 import { AppDrawerContent } from '@/components/navigation/AppDrawerContent';
+import { useClientDrawerCounts } from '@/components/navigation/drawer-counts';
 import { drawerScreenOptions } from '@/components/navigation/drawerScreenOptions';
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Drawer } from 'expo-router/drawer';
 
 export default function ClientLayout() {
+  // Propiedades, mis solicitudes y mis listas de espera junto a cada opción
+  const { counts, refresh } = useClientDrawerCounts();
+
   return (
     <Drawer
-      drawerContent={(props) => <AppDrawerContent {...props} />}
+      drawerContent={(props) => (
+        <AppDrawerContent {...props} counts={counts} onOpen={() => refresh()} />
+      )}
       screenOptions={drawerScreenOptions()}
     >
       <Drawer.Screen

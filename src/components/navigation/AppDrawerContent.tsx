@@ -1,5 +1,5 @@
 import { Drawer } from 'expo-router/drawer';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Image,
   ImageSourcePropType,
@@ -17,6 +17,10 @@ type BaseDrawerContentProps = Parameters<
 
 export type AppDrawerContentProps = BaseDrawerContentProps & {
   logo?: ImageSourcePropType;
+  /** Número a mostrar junto a cada opción (clave = nombre de la ruta). */
+  counts?: Record<string, number | undefined>;
+  /** Se llama cada vez que se abre el menú, para refrescar los números. */
+  onOpen?: () => void;
 };
 
 const ACTIVE_COLOR = '#fff';
@@ -27,8 +31,22 @@ export function AppDrawerContent({
   descriptors,
   navigation,
   logo = require('../../../assets/images/Logo SIGEC_.png'),
+  counts,
+  onOpen,
 }: AppDrawerContentProps) {
   const insets = useSafeAreaInsets();
+
+  // Al abrir el menú se piden de nuevo los números (así no se ven viejos)
+  const isOpen =
+    state.history?.some((h) => h.type === 'drawer' && h.status === 'open') ?? false;
+
+  const onOpenRef = useRef(onOpen);
+  useEffect(() => {
+    onOpenRef.current = onOpen;
+  });
+  useEffect(() => {
+    if (isOpen) onOpenRef.current?.();
+  }, [isOpen]);
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
@@ -51,11 +69,14 @@ export function AppDrawerContent({
               ? options.drawerLabel
               : options.title ?? route.name;
 
+          const count = counts?.[route.name];
+
           return (
             <Pressable
               key={route.key}
               onPress={() => navigation.navigate(route.name)}
               style={[styles.item, focused && styles.itemActive]}
+              accessibilityLabel={count === undefined ? label : `${label}, ${count}`}
             >
               {icono && (
                 <View style={styles.icon}>
@@ -68,9 +89,17 @@ export function AppDrawerContent({
               )}
               <Text
                 style={[styles.label, { color: focused ? ACTIVE_COLOR : INACTIVE_COLOR }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
                 {label}
               </Text>
+              {count !== undefined && (
+                <View style={[styles.badge, focused && styles.badgeActive]}>
+                  <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+                </View>
+              )}
             </Pressable>
           );
         })}
@@ -105,7 +134,17 @@ item: {
     marginTop: 10
   },
   itemActive: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, },
-  label: { fontSize: 20, fontWeight: 'bold', padding: 10 },
+  label: { flex: 1, fontSize: 20, fontWeight: 'bold', paddingVertical: 10, paddingHorizontal: 6 },
+  badge: {
+    minWidth: 30,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: 'rgba(139,92,246,0.35)',
+  },
+  badgeActive: { backgroundColor: 'rgba(139,92,246,0.85)' },
+  badgeText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
   icon: {
   width: 35,
   alignItems: "center",

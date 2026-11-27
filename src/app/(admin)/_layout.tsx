@@ -1,12 +1,18 @@
 import { AppDrawerContent } from "@/components/navigation/AppDrawerContent";
+import { useAdminDrawerCounts } from "@/components/navigation/drawer-counts";
 import { drawerScreenOptions } from "@/components/navigation/drawerScreenOptions";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Drawer } from "expo-router/drawer";
 
 export default function AdminLayout() {
+  // Usuarios, propiedades y solicitudes registrados + personas en lista de espera
+  const { counts, refresh } = useAdminDrawerCounts();
+
   return (
     <Drawer
-      drawerContent={(props) => <AppDrawerContent {...props} />}
+      drawerContent={(props) => (
+        <AppDrawerContent {...props} counts={counts} onOpen={() => refresh()} />
+      )}
       screenOptions={drawerScreenOptions()}
     >
       <Drawer.Screen

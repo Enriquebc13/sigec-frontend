@@ -3,6 +3,7 @@ import { InfoRow } from "@/components/ui/InfoRow";
 import { Avatar } from "@/components/ui/avatar";
 import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { RentedPropertiesSection } from "@/modules/request/presentation/client/components/RentedPropertiesSection";
 import { router } from "expo-router";
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useUserById } from "../admin/hooks/use-user-by-id";
@@ -88,6 +89,9 @@ export default function ClientProfileView() {
           }
         />
       </View>
+
+      {/* Propiedades que el cliente ya tiene rentadas (no aparece si no tiene) */}
+      <RentedPropertiesSection />
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
         <AntDesign name="logout" size={20} color="#FCA5A5" />
