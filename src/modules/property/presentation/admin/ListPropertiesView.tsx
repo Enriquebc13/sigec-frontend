@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/animation/Reveal";
+import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { goToPropertyRequests, goToPropertyWaitlist } from "@/modules/property/presentation/property-navigation";
@@ -6,7 +8,7 @@ import { useAdminRequests } from "@/modules/request/presentation/admin/hooks/use
 import { PropertyImageCarousel } from "@/modules/users/presentation/admin/components/PropertyImageCarousel";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { AutoRejectedNotice } from "@/modules/request/presentation/admin/components/AutoRejectedNotice";
 import { clearAutoRejected, useAutoRejected } from "./auto-rejected-store";
 import { useProperties } from "./hooks/use-properties";
@@ -99,9 +101,7 @@ export default function ListPropertiesView() {
   if (loading) {
     return (
       <GradientScreen>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#C7B5FF" />
-        </View>
+        <SkeletonList count={3} variant="property" />
       </GradientScreen>
     );
   }
@@ -150,10 +150,11 @@ export default function ListPropertiesView() {
           placeholder="Buscar por título, calle o ciudad..."
         />
 
-        {filteredProperties.map((property) => (
+        {filteredProperties.map((property, index) => (
 
 
-          <View key={property.id} style={styles.propertyCard}>
+          <Reveal key={property.id} index={Math.min(index, 5)} stagger={70}>
+          <View style={styles.propertyCard}>
             <PropertyImageCarousel images={property.images} />
 
             <View style={styles.cardHeader}>
@@ -282,8 +283,7 @@ export default function ListPropertiesView() {
               </Pressable>
             </View>
           </View>
-
-
+          </Reveal>
         ))}
         {filteredProperties.length === 0 && (
           <Text style={styles.emptyMessage}>

@@ -1,3 +1,5 @@
+import { PressableScale } from "@/components/animation/PressableScale";
+import { Reveal } from "@/components/animation/Reveal";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { OptionCard } from "@/components/ui/OptionCard";
 import { Slice, StatsPieCard } from "@/components/ui/StatsPieCard";
@@ -11,7 +13,6 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -130,22 +131,32 @@ export default function AdminHomeView() {
         />
       }
     >
-      <View style={styles.header}>
-        <Text style={styles.subtitle}>SIGEC</Text>
-        <Text style={styles.title}>Panel de administración</Text>
-        <Text style={styles.welcome}>¡Bienvenido, administrador!</Text>
-        <Text style={styles.email}>{session?.email}</Text>
-      </View>
+      {/* Cascada: encabezado → gestión → resumen (estadísticas) → perfil */}
+      <Reveal index={0}>
+        <View style={styles.header}>
+          <Text style={styles.subtitle}>SIGEC</Text>
+          <Text style={styles.title}>Panel de administración</Text>
+          <Text style={styles.welcome}>¡Bienvenido, administrador!</Text>
+          <Text style={styles.email}>{session?.email}</Text>
+        </View>
+      </Reveal>
 
-      <Text style={styles.sectionTitle}>Gestión del sistema</Text>
-      {options.map((option) => (
-        <OptionCard key={option.title} {...option} />
+      <Reveal index={1}>
+        <Text style={styles.sectionTitle}>Gestión del sistema</Text>
+      </Reveal>
+      {options.map((option, i) => (
+        <Reveal key={option.title} index={2 + i}>
+          <OptionCard {...option} />
+        </Reveal>
       ))}
 
-      <Text style={[styles.sectionTitle, styles.statsTitle]}>
-        Resumen del sistema
-      </Text>
+      <Reveal index={2 + options.length}>
+        <Text style={[styles.sectionTitle, styles.statsTitle]}>
+          Resumen del sistema
+        </Text>
+      </Reveal>
 
+      <Reveal index={3 + options.length}>
       <StatsPieCard
         title="Usuarios"
         subtitle="Distribución por rol"
@@ -154,7 +165,9 @@ export default function AdminHomeView() {
         loading={loadingUsers && users.length === 0}
         error={usersError}
       />
+      </Reveal>
 
+      <Reveal index={4 + options.length}>
       <StatsPieCard
         title="Espacios"
         subtitle="Distribución por estado"
@@ -163,14 +176,16 @@ export default function AdminHomeView() {
         loading={loadingProperties && properties.length === 0}
         error={propertiesError}
       />
+      </Reveal>
 
-      <TouchableOpacity
-        style={styles.profileButton}
-        activeOpacity={0.8}
-        onPress={() => router.replace("/(admin)/profile")}
-      >
-        <Text style={styles.profileButtonText}>Mi perfil  →</Text>
-      </TouchableOpacity>
+      <Reveal index={5 + options.length}>
+        <PressableScale
+          style={styles.profileButton}
+          onPress={() => router.replace("/(admin)/profile")}
+        >
+          <Text style={styles.profileButtonText}>Mi perfil  →</Text>
+        </PressableScale>
+      </Reveal>
     </GradientScreen>
   );
 }

@@ -1,3 +1,6 @@
+import { Reveal } from "@/components/animation/Reveal";
+import { AnimatedNotice } from "@/components/animation/AnimatedNotice";
+import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import {
@@ -6,7 +9,6 @@ import {
 } from "@/modules/request/domain/entities/request.entity";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   RefreshControl,
   StyleSheet,
   Text,
@@ -97,7 +99,7 @@ export default function ListRequestsView() {
           Consulta las solicitudes de espacios comerciales
         </Text>
 
-        {notice && <Text style={styles.notice}>{notice}</Text>}
+        {notice && <AnimatedNotice style={styles.notice}>{notice}</AnimatedNotice>}
 
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
@@ -134,10 +136,7 @@ export default function ListRequestsView() {
         </View>
 
         {loading && (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#C7B5FF" />
-            <Text style={styles.loadingText}>Cargando solicitudes...</Text>
-          </View>
+          <SkeletonList count={3} variant="request" />
         )}
 
         {error && !loading && (
@@ -174,13 +173,14 @@ export default function ListRequestsView() {
 
         {!loading &&
           !error &&
-          filteredRequests.map((request) => (
-            <AdminRequestCard
-              key={request.id}
-              request={request}
-              history={byRequest.get(request.id)}
-              onManage={setEditing}
-            />
+          filteredRequests.map((request, index) => (
+            <Reveal key={request.id} index={Math.min(index, 5)} stagger={70}>
+              <AdminRequestCard
+                request={request}
+                history={byRequest.get(request.id)}
+                onManage={setEditing}
+              />
+            </Reveal>
           ))}
       </View>
 

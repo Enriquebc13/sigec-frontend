@@ -1,6 +1,7 @@
 import { Href, router } from "expo-router";
 import { ReactNode } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "../animation/PressableScale";
 
 type Props = {
   icon: ReactNode;
@@ -17,9 +18,8 @@ export function OptionCard({ icon, title, description, route, onPress }: Props) 
   };
 
   return (
-    <TouchableOpacity
+    <PressableScale
       style={styles.optionCard}
-      activeOpacity={0.75}
       onPress={handlePress}
       disabled={!route && !onPress}
     >
@@ -33,7 +33,7 @@ export function OptionCard({ icon, title, description, route, onPress }: Props) 
       </View>
 
       <Text style={styles.arrow}>›</Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 

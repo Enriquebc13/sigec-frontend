@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/animation/Reveal";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { OptionCard } from "@/components/ui/OptionCard";
 import { useApiAuth } from "@/modules/auth-api/presentation/context/ApiAuthProvider";
@@ -37,14 +38,18 @@ export default function ClientHomeView() {
 
   return (
     <GradientScreen>
-      <View style={styles.header}>
-        <Text style={styles.subtitle}>SIGEC</Text>
-        <Text style={styles.title}>¡Bienvenido!</Text>
-        <Text style={styles.description}>
-          Encuentra el espacio comercial ideal para ti.
-        </Text>
-      </View>
+      {/* Cascada: encabezado → usuario → bienvenida → título → opciones → pie */}
+      <Reveal index={0}>
+        <View style={styles.header}>
+          <Text style={styles.subtitle}>SIGEC</Text>
+          <Text style={styles.title}>¡Bienvenido!</Text>
+          <Text style={styles.description}>
+            Encuentra el espacio comercial ideal para ti.
+          </Text>
+        </View>
+      </Reveal>
 
+      <Reveal index={1}>
       <View style={styles.userCard}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>
@@ -59,28 +64,37 @@ export default function ClientHomeView() {
           </Text>
         </View>
       </View>
+      </Reveal>
 
-      <View style={styles.welcomeCard}>
-        <Text style={styles.welcomeTitle}>
-          Tu próximo espacio comienza aquí
-        </Text>
-        <Text style={styles.welcomeText}>
-          Consulta los espacios disponibles y administra tus solicitudes
-          desde esta sección.
-        </Text>
-      </View>
+      <Reveal index={2}>
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeTitle}>
+            Tu próximo espacio comienza aquí
+          </Text>
+          <Text style={styles.welcomeText}>
+            Consulta los espacios disponibles y administra tus solicitudes
+            desde esta sección.
+          </Text>
+        </View>
+      </Reveal>
 
-      <Text style={styles.sectionTitle}>¿Qué deseas hacer?</Text>
+      <Reveal index={3}>
+        <Text style={styles.sectionTitle}>¿Qué deseas hacer?</Text>
+      </Reveal>
 
       {/* TARJETAS */}
-      {options.map((option) => (
-        <OptionCard key={option.title} {...option} />
+      {options.map((option, i) => (
+        <Reveal key={option.title} index={4 + i}>
+          <OptionCard {...option} />
+        </Reveal>
       ))} 
       {/* key funciona como un identificador único para que React pueda distinguir cada elemento de una lista. */}
 
-      <Text style={styles.footer}>
-        Sistema Integral de Gestión de Espacios Comerciales
-      </Text>
+      <Reveal index={4 + options.length}>
+        <Text style={styles.footer}>
+          Sistema Integral de Gestión de Espacios Comerciales
+        </Text>
+      </Reveal>
     </GradientScreen>
 
   );

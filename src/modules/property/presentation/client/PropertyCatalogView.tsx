@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/animation/Reveal";
+import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { normalizeText } from "@/modules/request/presentation/request-filters";
@@ -5,7 +7,6 @@ import { useMyRequests } from "@/modules/request/presentation/client/hooks/use-m
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -135,10 +136,7 @@ export default function PropertyCatalogView() {
         )}
 
         {firstLoad && (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color="#C7B5FF" />
-            <Text style={styles.loadingText}>Cargando propiedades...</Text>
-          </View>
+          <SkeletonList count={3} variant="property" />
         )}
 
         {error && properties.length === 0 && !loading && (
@@ -164,16 +162,17 @@ export default function PropertyCatalogView() {
             </Text>
           )}
 
-        {filtered.map((property) => (
-          <ClientPropertyCard
-            key={property.id}
-            property={property}
-            action={getCatalogAction(
-              property,
-              requestByProperty.get(property.id),
-            )}
-            onPressAction={() => setSelected(property)}
-          />
+        {filtered.map((property, index) => (
+          <Reveal key={property.id} index={Math.min(index, 5)} stagger={70}>
+            <ClientPropertyCard
+              property={property}
+              action={getCatalogAction(
+                property,
+                requestByProperty.get(property.id),
+              )}
+              onPressAction={() => setSelected(property)}
+            />
+          </Reveal>
         ))}
       </View>
 

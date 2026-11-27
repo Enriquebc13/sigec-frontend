@@ -24,12 +24,17 @@ export default function Layout() {
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen
+                    name="welcome"
+                    options={{ headerShown: false, animation: "fade", gestureEnabled: false }}
+                />
+                {/* Login → Home: transición con desvanecido en lugar del deslizamiento brusco */}
+                <Stack.Screen
                     name="(admin)"
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, animation: "fade" }}
                 />
                 <Stack.Screen
                     name="(client)"
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, animation: "fade" }}
                 />
                 <Stack.Screen
                     name="register"

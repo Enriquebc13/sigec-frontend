@@ -1,3 +1,6 @@
+import { Reveal } from "@/components/animation/Reveal";
+import { AnimatedNotice } from "@/components/animation/AnimatedNotice";
+import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
 import {
@@ -12,7 +15,6 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -172,7 +174,7 @@ function Content({ propertyId }: { propertyId: string }) {
           </Pressable>
         </View>
 
-        {notice && <Text style={styles.notice}>{notice}</Text>}
+        {notice && <AnimatedNotice style={styles.notice}>{notice}</AnimatedNotice>}
 
         <View style={styles.chips}>
           {REQUEST_FILTER_OPTIONS.map((opt) => {
@@ -192,10 +194,7 @@ function Content({ propertyId }: { propertyId: string }) {
         </View>
 
         {loading && (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color="#C7B5FF" />
-            <Text style={styles.loadingText}>Cargando solicitudes...</Text>
-          </View>
+          <SkeletonList count={3} variant="request" />
         )}
 
         {!loading && error && (
@@ -222,17 +221,18 @@ function Content({ propertyId }: { propertyId: string }) {
         {!loading &&
           !error &&
           visible.map((request, index) => (
-            <AdminRequestCard
-              key={request.id}
-              request={request}
-              onManage={setEditing}
-              highlight={
-                request.status === "PENDING" &&
-                request.posicionListaEspera === 1 &&
-                filter !== "REJECTED" &&
-                index === visible.findIndex((r) => r.posicionListaEspera === 1)
-              }
-            />
+            <Reveal key={request.id} index={Math.min(index, 5)} stagger={70}>
+              <AdminRequestCard
+                request={request}
+                onManage={setEditing}
+                highlight={
+                  request.status === "PENDING" &&
+                  request.posicionListaEspera === 1 &&
+                  filter !== "REJECTED" &&
+                  index === visible.findIndex((r) => r.posicionListaEspera === 1)
+                }
+              />
+            </Reveal>
           ))}
       </View>
 

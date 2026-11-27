@@ -1,10 +1,12 @@
+import { Reveal } from "@/components/animation/Reveal";
+import { AnimatedNotice } from "@/components/animation/AnimatedNotice";
+import { SkeletonList } from "@/components/animation/Skeleton";
 import { GradientScreen } from "@/components/ui/GradientScreen";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useProperties } from "@/modules/property/presentation/admin/hooks/use-properties";
 import { PropertyRequest } from "@/modules/request/domain/entities/request.entity";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   RefreshControl,
   StyleSheet,
   Text,
@@ -137,7 +139,7 @@ export default function MyRequestsView() {
           </Text>
         </View>
 
-        {notice && <Text style={styles.notice}>{notice}</Text>}
+        {notice && <AnimatedNotice style={styles.notice}>{notice}</AnimatedNotice>}
 
         <SearchInput
           value={searchQuery}
@@ -159,10 +161,7 @@ export default function MyRequestsView() {
         </View>
 
         {loading && (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#C7B5FF" />
-            <Text style={styles.loadingText}>Cargando tus solicitudes...</Text>
-          </View>
+          <SkeletonList count={3} variant="request" />
         )}
 
         {error && !loading && (
@@ -202,20 +201,21 @@ export default function MyRequestsView() {
 
         {!loading &&
           !error &&
-          filteredRequests.map((request) => (
-            <RequestCard
-              key={request.id}
-              request={request}
-              propertyTitle={titleOf(request.propertyId)}
-            >
-              <ClientRequestActions
+          filteredRequests.map((request, index) => (
+            <Reveal key={request.id} index={Math.min(index, 5)} stagger={70}>
+              <RequestCard
                 request={request}
-                rentedByMe={isRentedByMe(request)}
-                onEditPhone={setToEditPhone}
-                onCancel={askCancel}
-                onDelete={askDelete}
-              />
-            </RequestCard>
+                propertyTitle={titleOf(request.propertyId)}
+              >
+                <ClientRequestActions
+                  request={request}
+                  rentedByMe={isRentedByMe(request)}
+                  onEditPhone={setToEditPhone}
+                  onCancel={askCancel}
+                  onDelete={askDelete}
+                />
+              </RequestCard>
+            </Reveal>
           ))}
       </View>
 

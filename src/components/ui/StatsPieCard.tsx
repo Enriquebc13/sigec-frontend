@@ -1,6 +1,7 @@
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { ComponentProps, ReactNode, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Skeleton } from "../animation/Skeleton";
 import { PieChart } from "react-native-gifted-charts";
 
 type IconName = ComponentProps<typeof AntDesign>["name"];
@@ -75,7 +76,13 @@ export function StatsPieCard({ title, subtitle, icon, slices, loading, error }: 
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#FFFFFF" style={styles.state} />
+        <View style={styles.skeleton}>
+          <Skeleton width={170} height={170} radius={85} />
+          <View style={styles.skeletonLegend}>
+            <Skeleton width="70%" height={12} />
+            <Skeleton width="55%" height={12} />
+          </View>
+        </View>
       ) : error ? (
         <Text style={[styles.state, styles.error]}>{error}</Text>
       ) : total === 0 ? (
@@ -140,6 +147,8 @@ export function StatsPieCard({ title, subtitle, icon, slices, loading, error }: 
 }
 
 const styles = StyleSheet.create({
+  skeleton: { alignItems: "center", gap: 16, paddingVertical: 8 },
+  skeletonLegend: { width: "100%", alignItems: "center", gap: 8 },
   card: {
     backgroundColor: CARD_COLOR,
     borderRadius: 20,
