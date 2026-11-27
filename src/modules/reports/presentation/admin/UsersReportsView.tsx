@@ -1,11 +1,10 @@
+import DatePickerField from '@/components/ui/DatePickerField';
 import { GradientScreen } from '@/components/ui/GradientScreen';
-import { useUsers } from '@/modules/users/presentation/admin/hooks/use-users';
 import { User, UserRole } from '@/modules/users/domain/entities/user.entity';
-import ReportTabs from './components/ReportTabs';
+import { useUsers } from '@/modules/users/presentation/admin/hooks/use-users';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import * as XLSX from 'xlsx';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,9 +15,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  View,
+  View
 } from 'react-native';
+import * as XLSX from 'xlsx';
+import ReportTabs from './components/ReportTabs';
 
 type RoleFilter = 'ALL' | UserRole;
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -135,7 +135,7 @@ export default function UsersReportsView() {
     .filter(user => roleFilter === 'ALL' || user.role === roleFilter)
     .filter(user => statusFilter === 'ALL' || user.active === (statusFilter === 'ACTIVE'))
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-  [filteredByDate, roleFilter, statusFilter]);
+    [filteredByDate, roleFilter, statusFilter]);
 
   const adminUsers = filteredByDate.filter(user => user.role === 'ADMIN');
   const clientUsers = filteredByDate.filter(user => user.role === 'CLIENT');
@@ -193,16 +193,21 @@ export default function UsersReportsView() {
 
         <View style={styles.filterCard}>
           <Text style={styles.cardTitle}>Registrados</Text>
+
           <View style={styles.dateFields}>
-            <View style={styles.dateField}>
-              <Text style={styles.fieldLabel}>Desde</Text>
-              <TextInput value={fromText} onChangeText={setFromText} placeholder="AAAA-MM-DD" placeholderTextColor="#A99DBB" style={styles.dateInput} autoCapitalize="none" />
-            </View>
-            <View style={styles.dateField}>
-              <Text style={styles.fieldLabel}>Hasta</Text>
-              <TextInput value={toText} onChangeText={setToText} placeholder="AAAA-MM-DD" placeholderTextColor="#A99DBB" style={styles.dateInput} autoCapitalize="none" />
-            </View>
+            <DatePickerField
+              label="Desde"
+              value={fromText}
+              onChange={setFromText}
+            />
+
+            <DatePickerField
+              label="Hasta"
+              value={toText}
+              onChange={setToText}
+            />
           </View>
+
           <View style={styles.filterFooter}>
             {!!dateError && <Text style={styles.errorText}>{dateError}</Text>}
             <Pressable onPress={() => { setFromText(''); setToText(''); }} style={styles.clearButton}>

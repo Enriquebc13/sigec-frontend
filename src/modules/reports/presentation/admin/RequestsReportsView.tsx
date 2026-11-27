@@ -1,3 +1,4 @@
+import DatePickerField from '@/components/ui/DatePickerField';
 import { GradientScreen } from '@/components/ui/GradientScreen';
 import { useProperties } from '@/modules/property/presentation/admin/hooks/use-properties';
 import {
@@ -8,15 +9,14 @@ import { useAdminRequests } from '@/modules/request/presentation/admin/hooks/use
 import { buildContactMessage, isWhatsAppReachable, openWhatsApp } from '@/modules/request/presentation/admin/whatsapp';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   buildByMonth,
   buildByStatus,
   buildDemand,
   buildRange,
   buildWaitlists,
-  describeRange,
-  maskDateInput,
+  describeRange
 } from '../../application/requests-report';
 import {
   ALL_REQUEST_SHEETS,
@@ -87,6 +87,33 @@ export default function RequestsReportsView() {
   const emptyPeriod = 'No hay solicitudes en el periodo elegido.';
   const showData = !loading && !error;
 
+
+
+  function dateToISO(value: string): string {
+    if (!value) return '';
+
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+
+    if (!match) return '';
+
+    const [, day, month, year] = match;
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function dateToDMY(value: string): string {
+    if (!value) return '';
+
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+    if (!match) return '';
+
+    const [, year, month, day] = match;
+
+    return `${day}/${month}/${year}`;
+  }
+
+
   return (
     <GradientScreen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={['#6846A8']} />}>
       <View style={s.container}>
@@ -113,32 +140,21 @@ export default function RequestsReportsView() {
 
         {/* Filtro de fechas: aplica a los reportes 1, 2 y 3 (fecha de la solicitud) */}
         <View style={s.filterCard}>
+
           <View style={s.dateFields}>
-            <View style={s.dateField}>
-              <Text style={s.fieldLabel}>Solicitadas desde</Text>
-              <TextInput
-                value={fromText}
-                onChangeText={(t) => setFromText(maskDateInput(t))}
-                placeholder="dd/mm/aaaa"
-                placeholderTextColor="#A99DBB"
-                keyboardType="number-pad"
-                maxLength={10}
-                style={s.dateInput}
-              />
-            </View>
-            <View style={s.dateField}>
-              <Text style={s.fieldLabel}>Hasta</Text>
-              <TextInput
-                value={toText}
-                onChangeText={(t) => setToText(maskDateInput(t))}
-                placeholder="dd/mm/aaaa"
-                placeholderTextColor="#A99DBB"
-                keyboardType="number-pad"
-                maxLength={10}
-                style={s.dateInput}
-              />
-            </View>
+            <DatePickerField
+              label="Solicitadas desde"
+              value={dateToISO(fromText)}
+              onChange={(value) => setFromText(dateToDMY(value))}
+            />
+
+            <DatePickerField
+              label="Hasta"
+              value={dateToISO(toText)}
+              onChange={(value) => setToText(dateToDMY(value))}
+            />
           </View>
+
           <Pressable
             onPress={() => { setFromText(''); setToText(''); }}
             disabled={!fromText && !toText}
@@ -307,9 +323,9 @@ export default function RequestsReportsView() {
                   </View>
                   {isWhatsAppReachable(e.telefono)
                     ? <WhatsAppButton
-                        label={e.telefono}
-                        onPress={() => openWhatsApp(e.telefono, buildContactMessage({ applicant: e.name, propertyTitle: g.title, status: 'PENDING', position: e.position }))}
-                      />
+                      label={e.telefono}
+                      onPress={() => openWhatsApp(e.telefono, buildContactMessage({ applicant: e.name, propertyTitle: g.title, status: 'PENDING', position: e.position }))}
+                    />
                     : <Text style={s.entryMeta}>{e.telefono}</Text>}
                 </View>
               ))}
