@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { ImageFile } from "../../domain/entities/image-file";
 import { PropertyForm, PropertyFormData } from "../components/PropertyForm";
+import { setAutoRejected } from "./auto-rejected-store";
 import { useEditProperty } from "./hooks/use-edit-property";
 
 export default function EditPropertyView() {
@@ -54,7 +55,7 @@ function EditPropertyContent({ id }: { id: string }) {
         removedImageIds: string[]
     ) => {
         try {
-            await update({
+            const { autoRejectedRequests } = await update({
                 title: data.title,
                 description: data.description,
                 price: data.price,
@@ -69,11 +70,19 @@ function EditPropertyContent({ id }: { id: string }) {
 
             const failed = await syncImages(images, removedImageIds);
 
+            // El listado de Propiedades muestra el aviso con botón de WhatsApp
+            setAutoRejected(autoRejectedRequests);
+            const n = autoRejectedRequests.length;
+            const autoNote =
+                n > 0
+                    ? ` Se ${n === 1 ? "rechazó" : "rechazaron"} automáticamente ${n} ${n === 1 ? "solicitud" : "solicitudes"}; avísales desde Propiedades.`
+                    : "";
+
             Alert.alert(
                 "Propiedad actualizada",
-                failed > 0
+                (failed > 0
                     ? `Los datos se guardaron, pero ${failed} cambio(s) de fotos no se pudieron aplicar. Puedes intentarlo de nuevo editando la propiedad.`
-                    : "Los cambios se guardaron correctamente."
+                    : "Los cambios se guardaron correctamente.") + autoNote
             );
             router.navigate("/properties");
         } catch (e) {

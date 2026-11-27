@@ -3,7 +3,7 @@ import { DeletePropertyImageUseCase } from "@/modules/property/application/useca
 import { GetPropertyUseCase } from "@/modules/property/application/usecases/get-property.use-case";
 import { UpdatePropertyUseCase } from "@/modules/property/application/usecases/update-property.use-case";
 import { ImageFile } from "@/modules/property/domain/entities/image-file";
-import { Property } from "@/modules/property/domain/entities/property.entity";
+import { Property, UpdatePropertyResult } from "@/modules/property/domain/entities/property.entity";
 import { UpdatePropertyInput } from "@/modules/property/domain/entities/update-property-input";
 import { PropertyApiRepository } from "@/modules/property/infrastructure/repositories/property-api.repository";
 import { useCallback, useEffect, useState } from "react";
@@ -46,12 +46,13 @@ export function useEditProperty(id: string) {
         };
     }, [id]);
 
-    const update = async (input: UpdatePropertyInput) => {
+    // Devuelve la propiedad guardada y las solicitudes que la API rechazó sola
+    const update = async (input: UpdatePropertyInput): Promise<UpdatePropertyResult> => {
         setSaving(true);
         try {
-            const updated = await updatePropertyUseCase.execute(id, input);
-            setProperty(updated);
-            return updated;
+            const result = await updatePropertyUseCase.execute(id, input);
+            setProperty(result.property);
+            return result;
         } finally {
             setSaving(false);
         }

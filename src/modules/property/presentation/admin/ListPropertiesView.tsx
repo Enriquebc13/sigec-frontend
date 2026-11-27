@@ -7,6 +7,8 @@ import { PropertyImageCarousel } from "@/modules/users/presentation/admin/compon
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { AutoRejectedNotice } from "@/modules/request/presentation/admin/components/AutoRejectedNotice";
+import { clearAutoRejected, useAutoRejected } from "./auto-rejected-store";
 import { useProperties } from "./hooks/use-properties";
 
 
@@ -35,6 +37,9 @@ export default function ListPropertiesView() {
   } = useAdminRequests();
   const queues = useMemo(() => buildQueues(requests), [requests]);
   const showCount = !requestsLoading && !requestsError;
+
+  // Solicitudes que la API rechazó sola al guardar una propiedad (ej. pasó a rentada)
+  const autoRejected = useAutoRejected();
 
   const [searchText, setSearchText] = useState("");
   //Para filtrar propiedades
@@ -114,6 +119,8 @@ export default function ListPropertiesView() {
   return (
     <GradientScreen>
       <View style={styles.container}>
+
+        <AutoRejectedNotice rejected={autoRejected} onDismiss={clearAutoRejected} />
 
         <Text style={styles.subtitle}>
           Consulta y administra los espacios comerciales registrados

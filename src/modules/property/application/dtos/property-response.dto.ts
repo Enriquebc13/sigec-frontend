@@ -1,3 +1,5 @@
+import { AutoRejectedRequest } from "../../domain/entities/property.entity";
+
 export interface PropertyImageDto {
   id: string;
   url: string;
@@ -23,4 +25,9 @@ export interface PropertyResponseDto {
   amenities: string | null;
   address?: PropertyAddressDto | null;
   images?: PropertyImageDto[];
+}
+
+/** Respuesta de PUT /properties/:id: la propiedad más las solicitudes rechazadas automáticamente. */
+export interface UpdatePropertyResponseDto extends PropertyResponseDto {
+  autoRejectedRequests?: AutoRejectedRequest[];
 }

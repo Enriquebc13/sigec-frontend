@@ -1,9 +1,9 @@
 import { apiClient } from "@/core/http/api-client";
 import { File } from "expo-file-system";
-import { PropertyResponseDto } from "../../application/dtos/property-response.dto";
+import { PropertyResponseDto, UpdatePropertyResponseDto } from "../../application/dtos/property-response.dto";
 import { CreatePropertyInput } from "../../domain/entities/create-property-input";
 import { ImageFile } from "../../domain/entities/image-file";
-import { Property, PropertyImage } from "../../domain/entities/property.entity";
+import { Property, PropertyImage, UpdatePropertyResult } from "../../domain/entities/property.entity";
 import { UpdatePropertyInput } from "../../domain/entities/update-property-input";
 import { PropertyRepository } from "../../domain/interfaces/property.repository";
 function toProperty(p: PropertyResponseDto): Property {
@@ -50,12 +50,17 @@ export class PropertyApiRepository implements PropertyRepository {
     return toProperty(data);
   }
 
-  async update(id: string, input: UpdatePropertyInput): Promise<Property> {
-    const data = await apiClient<PropertyResponseDto>(`/properties/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(input),
-    });
-    return toProperty(data);
+  async update(id: string, input: UpdatePropertyInput): Promise<UpdatePropertyResult> {
+    const { autoRejectedRequests, ...detail } =
+      await apiClient<UpdatePropertyResponseDto>(`/properties/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(input),
+      });
+    return {
+      property: toProperty(detail),
+      // Viene vacío (o ausente) si el cambio no rechazó ninguna solicitud
+      autoRejectedRequests: autoRejectedRequests ?? [],
+    };
   }
 
   async delete(id: string): Promise<void> {
